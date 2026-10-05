@@ -4,132 +4,215 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
-<title>NYC walk</title>
+<title>Kes's birthday scavenger hunt</title>
+<meta name="theme-color" content="#2E3642">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 <style>
+  /* NYC Walk UI Kit tokens */
   :root {
-    --sign: #000; --ink: #fff; --muted: #a7a9ac; --dim: #3a3a3a; --signal: #ee352e; --go: #00933c; --you: #0a84ff;
-    --panel: rgba(0,0,0,.8);
-    color-scheme: dark;
+    --mist: #C8D8E0; --fog: #E3E4E6; --cream: #F0E4D3; --ink: #2E3642;
+    --page: #F5F5F7; --surface: #FFFFFF; --text: #2E3642; --muted: #5B6573; --line: #76818E; --signal: #B3362B;
+    --night: #1F252E; --glass: rgba(46,54,66,.72); --glass-strong: rgba(46,54,66,.86);
+    --font: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --safe-t: env(safe-area-inset-top, 0px); --safe-b: env(safe-area-inset-bottom, 0px);
+    color-scheme: light;
   }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --sign: #000; --ink: #fff; } }
-  :root[data-theme="dark"] { --sign: #000; --ink: #fff; }
   *, *::before, *::after { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
-  body { background: var(--sign); color: var(--ink); overflow: hidden;
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
-  button { font: inherit; }
-  .btn { font-weight: 700; font-size: 1.05rem; border: 0; border-radius: 999px; padding: 14px 22px; cursor: pointer; background: var(--ink); color: var(--sign); }
-  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-  .btn .ico { width: 20px; height: 20px; flex: none; }
-  .btn.ghost { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 2px rgba(255,255,255,.7); }
-  .link { background: none; border: 0; color: var(--muted); text-decoration: underline; padding: 6px 0; cursor: pointer; font-size: .98rem; }
-  .btn:focus-visible, .link:focus-visible, input:focus-visible, .chip:focus-visible { outline: 3px solid var(--signal); outline-offset: 3px; }
+  body { background: var(--page); color: var(--text); overflow: hidden; font-family: var(--font); -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
+  button { font: inherit; color: inherit; }
+  h1, h2, p { margin: 0; }
 
-  /* Map: full screen behind everything, or a minimap over the camera */
-  #map { position: fixed; inset: 0; z-index: 0; background: #E3E4E6; }
-  #map.mini { inset: auto; right: 12px; bottom: calc(env(safe-area-inset-bottom,0px) + 92px);
-    width: min(38vw, 170px); height: min(38vw, 170px); border-radius: 14px; box-shadow: 0 0 0 2px var(--ink); z-index: 30; overflow: hidden; }
-  #map.mini .maplibregl-control-container { display: none; }
-  .maplibregl-map { font-family: inherit; }
-  .maplibregl-ctrl-bottom-left, .maplibregl-ctrl-bottom-right { bottom: 0; }
-  .you { width: 18px; height: 18px; border-radius: 50%; background: var(--you); box-shadow: 0 0 0 3px #fff; }
-  .shot { min-width: 30px; height: 30px; padding: 0 6px; border-radius: 50%; background: #fff; color: #000; font-weight: 700; display: grid; place-items: center;
-    box-shadow: 0 0 0 3px var(--signal); font-size: 15px; }
+  /* Buttons */
+  .btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 54px; padding: 0 22px; border: 0; border-radius: 999px;
+    background: var(--ink); color: var(--cream); font-size: 16px; font-weight: 700; cursor: pointer; text-decoration: none; }
+  .btn.secondary { background: var(--cream); color: var(--ink); }
+  .btn.light { background: var(--cream); color: var(--ink); }
+  .btn .ico, .ico { width: 20px; height: 20px; flex: none; }
+  .btn:disabled { opacity: .6; cursor: default; }
+  .link { background: none; border: 0; padding: 12px 4px; min-height: 44px; color: var(--text); font-size: 15px; line-height: 20px; text-decoration: underline; cursor: pointer; }
+  .link.center { align-self: center; }
+  .link.quiet { color: var(--muted); align-self: center; font-size: 13px; }
+  :focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+  .dark :focus-visible { outline-color: var(--mist); }
 
-  /* Top bar */
-  #top { position: fixed; left: 0; right: 0; top: 0; z-index: 20; pointer-events: none;
-    padding: calc(env(safe-area-inset-top,0px) + 10px) 12px 0; display: none; }
-  #top.on { display: block; }
-  #locBtn { margin-top: 8px; padding: 10px 18px; font-size: .95rem; display: flex; }
-  #locNote { display: none; width: fit-content; max-width: min(92vw, 520px); margin: 8px auto 0; background: var(--sign); color: var(--ink);
-    border-radius: 14px; padding: 8px 14px; font-size: .92rem; line-height: 1.35; text-align: center; box-shadow: 0 0 0 2px var(--dim); }
-  .topRow { display: flex; gap: 10px; align-items: stretch; max-width: 560px; margin: 0 auto; }
-  .board { flex: 1; display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; background: var(--panel); padding: 8px; border-radius: 14px; }
-  .slot { aspect-ratio: 3 / 4; border-radius: 6px; background: #111; box-shadow: inset 0 0 0 2px var(--dim);
-    display: grid; place-items: center; font-weight: 700; font-size: clamp(1.1rem, 5.5vw, 1.8rem); }
-  .slot.filled { background: var(--ink); color: var(--sign); box-shadow: none; }
-  .slot.next { box-shadow: inset 0 0 0 2px var(--signal); }
+  /* Code tiles */
+  .tiles { display: flex; gap: 8px; }
+  .slot { border-radius: 6px; background: var(--fog); color: var(--ink); display: flex; align-items: center; justify-content: center; font-weight: 700; }
+  .slot.filled { background: var(--cream); }
+  .slot.next { box-shadow: inset 0 0 0 2px var(--ink); }
+  .slot.cur { box-shadow: inset 0 0 0 2.5px var(--ink); }
   .slot.pop { animation: pop .6s ease-out; }
   @keyframes pop { 0% { transform: scale(.4); } 70% { transform: scale(1.12); } 100% { transform: scale(1); } }
-  .stats { background: var(--panel); border-radius: 14px; padding: 8px 12px; display: flex; flex-direction: column; justify-content: center; min-width: 88px; }
-  .stats b { font-size: 1.15rem; font-variant-numeric: tabular-nums; }
-  .stats span { color: var(--muted); font-size: .8rem; font-variant-numeric: tabular-nums; }
+
+  /* Map */
+  #map { position: fixed; inset: 0; z-index: 0; background: var(--fog); }
+  #map.mini { display: none; }
+  .maplibregl-map { font-family: inherit; }
+  .maplibregl-ctrl-attrib { font-size: 11px; }
+  .you { width: 18px; height: 18px; border-radius: 50%; background: var(--ink); box-shadow: 0 0 0 3px #fff, 0 0 0 12px rgba(46,54,66,.15); }
+  .shot { min-width: 30px; height: 30px; padding: 0 8px; border-radius: 15px; background: var(--cream); color: var(--ink); font-weight: 700; font-size: 14px;
+    display: flex; align-items: center; justify-content: center; box-shadow: inset 0 0 0 2px var(--ink); }
+
+  /* Top: code so far and timer */
+  #top { position: fixed; left: 0; right: 0; top: 0; z-index: 20; pointer-events: none; padding: calc(var(--safe-t) + 14px) 16px 0; display: none; }
+  #top.on { display: block; }
+  .topPill { pointer-events: auto; width: fit-content; margin: 0 auto; display: flex; align-items: center; gap: 12px; background: var(--surface); border-radius: 999px;
+    padding: 8px 16px 8px 10px; box-shadow: 0 2px 10px rgba(46,54,66,.12); }
+  #board { gap: 4px; }
+  #board .slot { width: 22px; height: 28px; border-radius: 5px; font-size: 14px; }
+  #clock { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  #dist { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  #locNote { pointer-events: auto; display: none; width: fit-content; max-width: min(92vw, 480px); margin: 10px auto 0; background: var(--surface); color: var(--text);
+    border-radius: 14px; padding: 12px 16px; font-size: 15px; line-height: 21px; box-shadow: 0 2px 10px rgba(46,54,66,.12); }
+  #locBtn { margin-top: 10px; min-height: 44px; font-size: 15px; }
+
+  #center { position: fixed; z-index: 19; right: 16px; width: 48px; height: 48px; border-radius: 50%; border: 0; background: var(--surface); color: var(--ink);
+    display: none; align-items: center; justify-content: center; padding: 0; box-shadow: 0 2px 10px rgba(46,54,66,.18); cursor: pointer; }
+  #center.on { display: flex; }
 
   /* Bottom sheet */
   #sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: none; }
   #sheet.on { display: block; }
-  .sheetIn { max-width: 560px; margin: 0 auto; background: var(--sign); border-radius: 20px 20px 0 0;
-    padding: 14px 22px calc(env(safe-area-inset-bottom,0px) + 18px); max-height: 62vh; overflow-y: auto; }
-  .handle { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; }
-  .kicker { color: var(--muted); font-size: .95rem; margin: 0; }
-  .rule { height: 3px; background: var(--ink); margin-bottom: 12px; }
-  h1 { font-size: clamp(1.9rem, 8vw, 2.8rem); font-weight: 700; letter-spacing: -.02em; line-height: 1.04; margin: 0 0 12px; }
-  .clue { font-size: 1.15rem; line-height: 1.5; margin: 0 0 14px; max-width: 38ch; }
-  .note { color: var(--muted); font-size: .98rem; line-height: 1.45; margin: 0 0 12px; max-width: 40ch; }
-  .hint { border-left: 3px solid var(--signal); padding: 4px 0 4px 12px; margin: 0 0 14px; line-height: 1.45; display: none; max-width: 38ch; }
-  .actions { display: flex; flex-wrap: wrap; gap: 4px 18px; align-items: center; }
-  .actions .btn { width: 100%; margin-bottom: 6px; }
-  .answerRow { display: flex; gap: 10px; flex-wrap: wrap; width: 100%; margin-bottom: 6px; }
-  .answerRow input { font: inherit; font-size: 1.15rem; padding: 12px 14px; border-radius: 10px; border: 2px solid var(--dim);
-    background: #111; color: var(--ink); flex: 1; min-width: 8em; }
-  .msg { min-height: 1.2em; font-size: .95rem; color: #ff8a84; margin: 6px 0 0; }
-  .past { margin-top: 14px; border-top: 1px solid var(--dim); padding-top: 10px; }
-  .past summary { cursor: pointer; color: var(--muted); }
-  .past ol { padding-left: 0; list-style: none; margin: 10px 0 0; }
-  .past li { display: flex; gap: 12px; margin-bottom: 12px; line-height: 1.4; color: #ddd; }
-  .past li b { flex: none; min-width: 28px; padding: 0 6px; height: 34px; border-radius: 6px; background: var(--ink); color: var(--sign); display: grid; place-items: center; }
+  .sheetIn { max-width: 560px; margin: 0 auto; background: var(--surface); border-radius: 20px 20px 0 0; box-shadow: 0 -2px 16px rgba(46,54,66,.12);
+    padding: 4px 24px calc(var(--safe-b) + 24px); max-height: 64vh; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+  .grab { align-self: stretch; height: 24px; border: 0; background: none; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
+  .grab span { width: 40px; height: 4px; border-radius: 2px; background: var(--fog); }
+  .kicker { font-size: 13px; line-height: 18px; color: var(--muted); }
+  .body { display: flex; flex-direction: column; gap: 14px; }
   .collapsed .body { display: none; }
-  .row { display: flex; gap: 22px; margin: 4px 0 14px; }
-  .row div b { display: block; font-size: 1.6rem; font-variant-numeric: tabular-nums; }
-  .row div span { color: var(--muted); font-size: .9rem; }
-  #center { position: fixed; z-index: 19; right: 14px; display: none; }
-  #center.on { display: block; }
-  .chip { background: var(--sign); color: var(--ink); border: 0; border-radius: 999px; padding: 10px 14px; font-weight: 700; box-shadow: 0 0 0 2px var(--dim); cursor: pointer; }
+  .clue { font-size: 18px; line-height: 27px; max-width: 38ch; }
+  .hint { display: none; background: var(--cream); border-radius: 14px; padding: 12px 16px; font-size: 16px; line-height: 24px; }
+  .msg { min-height: 0; font-size: 15px; line-height: 20px; color: var(--signal); }
+  .msg:empty { display: none; }
+  .past { border-top: 1px solid var(--fog); padding-top: 6px; }
+  .past summary { cursor: pointer; color: var(--muted); font-size: 15px; padding: 10px 0; }
+  .past ol { list-style: none; padding: 0; margin: 4px 0 0; display: flex; flex-direction: column; gap: 12px; }
+  .past li { display: flex; gap: 12px; font-size: 15px; line-height: 22px; color: var(--muted); }
+  .past li b { flex: none; min-width: 28px; height: 34px; padding: 0 6px; border-radius: 6px; background: var(--cream); color: var(--ink); display: flex; align-items: center; justify-content: center; }
+  .fin { align-items: stretch; text-align: center; }
+  .finTiles { justify-content: center; }
+  .finTiles .slot { width: 46px; height: 60px; font-size: 30px; }
+  .finQ { font-size: 26px; line-height: 32px; font-weight: 700; }
+  .stats { display: flex; justify-content: center; gap: 40px; }
+  .stats div { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .stats b { font-size: 20px; font-variant-numeric: tabular-nums; }
+  .stats span { font-size: 13px; color: var(--muted); }
 
-  /* Camera and result */
-  .screen { position: fixed; inset: 0; display: none; z-index: 10; background: #000; }
+  .dest { padding: 8px 12px; border-radius: 999px; background: var(--ink); color: var(--cream); font-weight: 700; font-size: 14px; white-space: nowrap;
+    box-shadow: 0 0 0 3px #fff, 0 2px 10px rgba(46,54,66,.3); }
+  .dirBox { text-align: left; display: flex; flex-direction: column; gap: 12px; border-top: 1px solid var(--fog); padding-top: 18px; }
+  .dirBox h2 { font-size: 24px; line-height: 30px; }
+  #dirSum { font-size: 16px; line-height: 24px; color: var(--muted); }
+  #dirSteps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  #dirSteps li { display: flex; gap: 12px; align-items: baseline; font-size: 16px; line-height: 24px; }
+  #dirSteps li span { margin-left: auto; padding-left: 12px; font-size: 13px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  #dirSteps:empty { display: none; }
+
+  /* Full screens */
+  .screen { position: fixed; inset: 0; display: none; z-index: 10; }
   .screen.on { display: block; }
+  .dark { background: var(--night); color: #fff; }
+
+  /* Opening screens */
+  .intro { padding: calc(var(--safe-t) + 56px) 28px calc(var(--safe-b) + 32px); flex-direction: column; overflow-y: auto; }
+  .intro.on { display: flex; }
+  .intro .inner { width: 100%; max-width: 440px; margin: 0 auto; flex: 1; display: flex; flex-direction: column; }
+  #introA { background: var(--ink); color: var(--cream); overflow: hidden; }
+  #introB, #introC { background: var(--page); }
+  .introTiles { display: flex; gap: 8px; }
+  .introTiles span { width: 40px; height: 52px; border-radius: 6px; box-shadow: inset 0 0 0 2px #8B98A6; }
+  .bday { margin-top: auto; display: flex; flex-direction: column; gap: 18px; position: relative; z-index: 1; }
+  .bday h1 { font-size: clamp(52px, 16vw, 64px); line-height: .94; font-weight: 700; letter-spacing: -.03em; }
+  .bday p { font-size: 20px; line-height: 28px; color: var(--mist); }
+  .introFoot { margin-top: 40px; display: flex; flex-direction: column; gap: 20px; position: relative; z-index: 1; }
+  .dots { display: flex; gap: 8px; justify-content: center; }
+  .dots span { width: 6px; height: 6px; border-radius: 3px; background: var(--line); }
+  .dots span.on { width: 22px; background: var(--ink); }
+  #introA .dots span { background: #8B98A6; } #introA .dots span.on { background: var(--cream); }
+  .backBtn { width: 48px; height: 48px; margin: -24px 0 20px -12px; border: 0; background: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--ink); }
+  .introTitle { font-size: 40px; line-height: 44px; font-weight: 700; letter-spacing: -.02em; margin-bottom: 32px; }
+  .steps { display: flex; flex-direction: column; gap: 26px; }
+  .step { display: flex; gap: 16px; align-items: flex-start; }
+  .step .num { flex: none; width: 36px; height: 36px; border-radius: 50%; background: var(--cream); display: flex; align-items: center; justify-content: center; font-weight: 700; }
+  .step b { display: block; font-size: 18px; line-height: 24px; margin-bottom: 4px; }
+  .step p { font-size: 16px; line-height: 24px; color: var(--muted); }
+  .readyRow { display: flex; gap: 16px; align-items: center; font-size: 17px; line-height: 24px; }
+  .readyRow .sq { flex: none; width: 44px; height: 44px; border-radius: 12px; background: var(--mist); display: flex; align-items: center; justify-content: center; color: var(--ink); }
+  .fine { font-size: 13px; line-height: 18px; color: var(--muted); text-align: center; }
+  #startMsg { font-size: 15px; line-height: 21px; }
+  #startMsg:empty { display: none; }
+  #startMsg.err { color: var(--signal); }
+
+  /* Fireworks */
+  .fw { position: absolute; left: 0; top: 0; right: 0; height: 60%; pointer-events: none; }
+  .fw .b { position: absolute; width: 0; height: 0; }
+  .kes-p { position: absolute; left: 0; top: 0; font-size: 26px; line-height: 1; transform: translate(-50%,-50%); opacity: 0; animation: kesBurst 2.8s cubic-bezier(.15,.7,.3,1) infinite; }
+  .kes-f { position: absolute; left: 0; top: 0; width: 44px; height: 44px; border-radius: 50%; background: var(--cream); opacity: 0; animation: kesFlash 2.8s ease-out infinite; }
+  @keyframes kesBurst { 0% { transform: translate(-50%,-50%) scale(.2); opacity: 0 } 12% { opacity: 1 } 65% { opacity: 1 } 100% { transform: translate(-50%,-50%) translate(var(--dx),var(--dy)) scale(1); opacity: 0 } }
+  @keyframes kesFlash { 0% { transform: translate(-50%,-50%) scale(.2); opacity: 0 } 10% { opacity: .9 } 60% { transform: translate(-50%,-50%) scale(1.6); opacity: 0 } 100% { opacity: 0 } }
+
+  /* Camera */
   video, #live, #shot { position: absolute; inset: 0; width: 100%; height: 100%; }
   video { object-fit: cover; }
   #live { pointer-events: none; }
-  #guide { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(90vw, 620px); z-index: 1;
-    pointer-events: none; opacity: .75; transition: opacity .3s; }
-  #guide svg { display: block; width: 100%; height: auto; filter: drop-shadow(0 0 2px rgba(0,0,0,.9)); }
+  #guide { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(90vw, 620px); z-index: 1; pointer-events: none; opacity: .85; transition: opacity .3s; }
+  #guide svg { display: block; width: 100%; height: auto; filter: drop-shadow(0 0 2px rgba(0,0,0,.8)); }
   #guide.off { opacity: 0; }
-  #snap { position: absolute; left: 0; top: 0; z-index: 1; pointer-events: none; transform-origin: 0 0; display: none;
-    filter: drop-shadow(0 0 2px rgba(0,0,0,.85)); }
+  #snap { position: absolute; left: 0; top: 0; z-index: 1; pointer-events: none; transform-origin: 0 0; display: none; filter: drop-shadow(0 0 2px rgba(0,0,0,.8)); }
   #snap svg { display: block; overflow: visible; }
-  #guideTip { position: absolute; left: 50%; transform: translateX(-50%); z-index: 1; white-space: nowrap;
-    background: var(--panel); padding: 6px 12px; border-radius: 12px; font-size: .9rem; pointer-events: none; transition: opacity .3s; }
-  #shot { object-fit: contain; }
-  #camClue { position: absolute; left: 12px; right: 12px; top: calc(env(safe-area-inset-top,0px) + 12px); z-index: 2;
-    background: var(--panel); border-radius: 14px; padding: 10px 14px; line-height: 1.4; font-size: .98rem; border: 0; color: var(--ink); text-align: left; cursor: pointer; width: auto; }
-  #camClue small { display: block; color: var(--muted); margin-bottom: 4px; font-size: .85rem; }
-  #camClue.short span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  .pill { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom,0px) + 92px); z-index: 2;
-    background: var(--panel); padding: 10px 14px; border-radius: 18px; font-size: .95rem; max-width: calc(100% - 24px); width: max-content;
-    display: flex; align-items: center; gap: 10px; }
-  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); animation: pulse 1.2s infinite; flex: none; }
+  #guideTip { display: none; }
+  .glass { background: var(--glass); color: #fff; border: 0; cursor: pointer; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+  .circle { position: absolute; top: calc(var(--safe-t) + 16px); left: 16px; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0; z-index: 3; }
+  #camClueBtn { position: absolute; top: calc(var(--safe-t) + 16px); right: 16px; height: 48px; padding: 0 18px 0 14px; border-radius: 999px; display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; z-index: 3; }
+  #camClue { position: absolute; left: 16px; right: 16px; top: calc(var(--safe-t) + 76px); z-index: 3; display: none; text-align: left; border: 0; cursor: pointer;
+    background: var(--glass-strong); color: #fff; border-radius: 14px; padding: 14px 16px; font-size: 16px; line-height: 24px; max-width: 520px; margin: 0 auto; }
+  #camClue.open { display: block; }
+  #camClue small { display: block; color: #B9C3CB; font-size: 13px; line-height: 18px; margin-bottom: 4px; }
+  .camBottom { position: absolute; left: 0; right: 0; bottom: calc(var(--safe-b) + 28px); z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 0 16px; }
+  .camTools { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .chip { height: 40px; padding: 0 16px; border-radius: 999px; font-size: 15px; font-weight: 700; }
+  .pill { display: flex; align-items: center; gap: 10px; background: var(--glass-strong); color: #fff; border-radius: 999px; padding: 12px 20px; font-size: 15px; line-height: 20px; max-width: 100%; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--mist); animation: pulse 1.2s infinite; flex: none; }
   @keyframes pulse { 50% { opacity: .3; } }
-  .bar { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
-    padding: 14px 14px calc(env(safe-area-inset-bottom,0px) + 14px); background: var(--panel); }
-  #badge { position: absolute; left: 50%; transform: translateX(-50%); top: calc(env(safe-area-inset-top,0px) + 16px);
-    background: var(--panel); padding: 10px 16px; border-radius: 18px; display: flex; align-items: center; gap: 10px; z-index: 2; }
-  #badge.found { background: var(--go); font-weight: 700; padding-left: 10px; }
-  #badge svg { width: 28px; height: 28px; flex: none; }
-  #manual { position: absolute; left: 12px; right: 12px; bottom: calc(env(safe-area-inset-bottom,0px) + 96px); z-index: 2; display: none;
-    background: var(--panel); border-radius: 18px; padding: 14px; flex-direction: column; gap: 10px; }
+
+  /* Result */
+  #shot { object-fit: contain; }
+  #resCard { position: absolute; left: 12px; right: 12px; bottom: calc(var(--safe-b) + 12px); z-index: 2; max-width: 520px; margin: 0 auto; max-height: calc(100% - var(--safe-t) - 24px); overflow-y: auto;
+    background: var(--surface); color: var(--text); border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 18px; }
+  #badge { display: flex; align-items: center; gap: 12px; }
+  .bIco { width: 36px; height: 36px; border-radius: 50%; background: var(--mist); color: var(--ink); display: flex; align-items: center; justify-content: center; flex: none; }
+  .bIco svg { width: 20px; height: 20px; }
+  #badge .ck { display: none; }
+  #badge.found .bIco { background: var(--ink); color: var(--cream); }
+  #badge.found .ck { display: block; } #badge.found .cm { display: none; }
+  #badgeText { font-size: 24px; line-height: 30px; font-weight: 700; }
+  #resTiles .slot { flex: 1 1 0; max-width: 44px; aspect-ratio: 44 / 56; font-size: 26px; }
+  #manual { display: none; flex-direction: column; gap: 10px; }
   #manual.on { display: flex; }
-  #manual label { font-size: 1rem; line-height: 1.35; font-weight: 700; }
+  #manual label { font-size: 16px; line-height: 24px; font-weight: 700; }
   #manual .row { display: flex; gap: 8px; }
-  #manual input { flex: 1; min-width: 0; font: inherit; font-size: 1.4rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
-    padding: 10px 14px; border-radius: 12px; border: 2px solid rgba(255,255,255,.7); background: rgba(255,255,255,.08); color: var(--ink); }
-  #manual input.wrong { border-color: var(--signal); animation: shake .35s; }
-  #answerMsg { margin: 0; min-height: 1.3em; font-size: .95rem; }
+  #manual .row .btn { width: auto; flex: none; }
+  #answer { flex: 1; min-width: 0; font: inherit; font-size: 22px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text);
+    padding: 0 16px; height: 54px; border-radius: 6px; border: 2px solid var(--line); background: var(--surface); }
+  #answer.wrong { border-color: var(--signal); animation: shake .35s; }
+  #answerMsg { font-size: 15px; line-height: 20px; color: var(--signal); }
+  #answerMsg:empty { display: none; }
   @keyframes shake { 0%,100% { transform: none } 25% { transform: translateX(-6px) } 75% { transform: translateX(6px) } }
-  @media (prefers-reduced-motion: reduce) { #manual input.wrong { animation: none; } }
-  @media (prefers-reduced-motion: reduce) { .dot, .slot.pop { animation: none; } }
+  .links { display: flex; justify-content: center; gap: 24px; margin-top: -6px; }
+
+  /* Confirm */
+  #confirmDlg { border: 0; border-radius: 20px; padding: 24px; width: min(88vw, 360px); color: var(--text); background: var(--surface); }
+  #confirmDlg::backdrop { background: rgba(31,37,46,.5); }
+  #confirmDlg h2 { font-size: 24px; line-height: 30px; margin-bottom: 8px; }
+  #confirmDlg p { font-size: 16px; line-height: 24px; color: var(--muted); margin-bottom: 20px; }
+  #confirmDlg .stack { display: flex; flex-direction: column; gap: 8px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dot, .slot.pop, #answer.wrong { animation: none; }
+    .kes-p { animation: none; opacity: 1; transform: translate(-50%,-50%) translate(var(--dx),var(--dy)); }
+    .kes-f { animation: none; }
+  }
 </style>
 </head>
 <body>
@@ -137,50 +220,100 @@
 <div id="map" role="region" aria-label="Map of your route"></div>
 
 <div id="top">
-  <div class="topRow">
-    <div class="board" id="board" aria-label="Your collected pieces"></div>
-    <div class="stats" aria-live="off"><b id="clock">0:00</b><span id="dist">0.0 mi</span></div>
+  <div class="topPill">
+    <div class="tiles" id="board" aria-label="Your code so far"></div>
+    <span id="clock">0:00</span><span id="dist">0.0 mi</span>
   </div>
-  <div id="locNote" role="status" aria-live="polite"><span id="locText"></span><button class="btn" id="locBtn" type="button" style="display:none">Turn on location</button></div>
+  <div id="locNote" role="status" aria-live="polite"><span id="locText"></span><button class="btn" id="locBtn" type="button" style="display:none"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span>Turn on location</span></button></div>
 </div>
 
-<button id="center" class="chip">Center on me</button>
+<button id="center" aria-label="Center the map on me"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></button>
 
 <div id="sheet"><div class="sheetIn" id="sheetIn"></div></div>
 
-<section id="cam" class="screen" aria-label="Camera">
+<section id="introA" class="screen intro" aria-label="Welcome">
+  <div class="fw" aria-hidden="true"><div class="b" style="left:28%;top:42%"><span class="kes-f" style="animation-delay:0s"></span><span class="kes-p" style="--dx:78px;--dy:0px;animation-delay:0s">🎉</span><span class="kes-p" style="--dx:55px;--dy:55px;animation-delay:0s">🎂</span><span class="kes-p" style="--dx:0px;--dy:78px;animation-delay:0s">🎈</span><span class="kes-p" style="--dx:-55px;--dy:55px;animation-delay:0s">✨</span><span class="kes-p" style="--dx:-78px;--dy:0px;animation-delay:0s">🎁</span><span class="kes-p" style="--dx:-55px;--dy:-55px;animation-delay:0s">🥳</span><span class="kes-p" style="--dx:0px;--dy:-78px;animation-delay:0s">🎊</span><span class="kes-p" style="--dx:55px;--dy:-55px;animation-delay:0s">⭐</span></div><div class="b" style="left:73%;top:30%"><span class="kes-f" style="animation-delay:0.9s"></span><span class="kes-p" style="--dx:78px;--dy:0px;animation-delay:0.9s">✨</span><span class="kes-p" style="--dx:55px;--dy:55px;animation-delay:0.9s">🎁</span><span class="kes-p" style="--dx:0px;--dy:78px;animation-delay:0.9s">🥳</span><span class="kes-p" style="--dx:-55px;--dy:55px;animation-delay:0.9s">🎊</span><span class="kes-p" style="--dx:-78px;--dy:0px;animation-delay:0.9s">⭐</span><span class="kes-p" style="--dx:-55px;--dy:-55px;animation-delay:0.9s">🎉</span><span class="kes-p" style="--dx:0px;--dy:-78px;animation-delay:0.9s">🎂</span><span class="kes-p" style="--dx:55px;--dy:-55px;animation-delay:0.9s">🎈</span></div><div class="b" style="left:54%;top:70%"><span class="kes-f" style="animation-delay:1.8s"></span><span class="kes-p" style="--dx:78px;--dy:0px;animation-delay:1.8s">🥳</span><span class="kes-p" style="--dx:55px;--dy:55px;animation-delay:1.8s">🎊</span><span class="kes-p" style="--dx:0px;--dy:78px;animation-delay:1.8s">⭐</span><span class="kes-p" style="--dx:-55px;--dy:55px;animation-delay:1.8s">🎉</span><span class="kes-p" style="--dx:-78px;--dy:0px;animation-delay:1.8s">🎂</span><span class="kes-p" style="--dx:-55px;--dy:-55px;animation-delay:1.8s">🎈</span><span class="kes-p" style="--dx:0px;--dy:-78px;animation-delay:1.8s">✨</span><span class="kes-p" style="--dx:55px;--dy:-55px;animation-delay:1.8s">🎁</span></div></div>
+  <div class="inner">
+    <div class="introTiles" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+    <div class="bday"><h1>Happy birthday, Kes!</h1><p>Welcome to your birthday scavenger hunt.</p></div>
+    <div class="introFoot"><button class="btn light" id="goA">Let's go</button><div class="dots" aria-hidden="true"><span class="on"></span><span></span><span></span></div></div>
+  </div>
+</section>
+
+<section id="introB" class="screen intro" aria-label="How it works">
+  <div class="inner">
+    <button class="backBtn" id="backB" aria-label="Back"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
+    <h1 class="introTitle">How it works</h1>
+    <div class="steps">
+      <div class="step"><span class="num">1</span><div><b>Read the clue</b><p>Each one is a riddle that points to a place in Midtown.</p></div></div>
+      <div class="step"><span class="num">2</span><div><b>Find it and tap Camera</b><p>Point your phone at what the clue describes. It knows when you've got it.</p></div></div>
+      <div class="step"><span class="num">3</span><div><b>Collect a piece</b><p>Every place adds to a secret code. Fill all six tiles, then work out what they mean.</p></div></div>
+    </div>
+    <div class="introFoot" style="margin-top:auto;padding-top:40px"><button class="btn" id="goB"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>Next</button><div class="dots" aria-hidden="true"><span></span><span class="on"></span><span></span></div></div>
+  </div>
+</section>
+
+<section id="introC" class="screen intro" aria-label="Before you start">
+  <div class="inner">
+    <button class="backBtn" id="backC" aria-label="Back"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
+    <h1 class="introTitle">Before you start</h1>
+    <div class="steps">
+      <div class="readyRow"><span class="sq"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>About an hour and a half, and two miles on foot.</div>
+      <div class="readyRow"><span class="sq"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg></span>Allow the camera and your location when asked.</div>
+      <div class="readyRow"><span class="sq"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="16" height="10" rx="2"/><path d="M21 11v2M6 10v4M9 10v4"/></svg></span>Start with a charged phone and comfy shoes.</div>
+    </div>
+    <div class="introFoot" style="margin-top:auto;padding-top:40px">
+      <p id="startMsg" aria-live="polite"></p>
+      <button class="btn" id="startBtn"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span>Allow location and start</span></button>
+      <button class="link center" id="skipLoc" style="display:none;margin-top:-12px">Start without location</button>
+      <p class="fine">Your location draws your route. It stays on your phone.</p>
+      <div class="dots" aria-hidden="true"><span></span><span></span><span class="on"></span></div>
+    </div>
+  </div>
+</section>
+
+<section id="cam" class="screen dark" aria-label="Camera">
   <video id="video" playsinline muted autoplay></video>
   <canvas id="live"></canvas>
   <div id="guide" aria-hidden="true"></div>
   <div id="snap" aria-hidden="true"></div>
-  <div id="guideTip">Line it up with the outline</div>
-  <button id="camClue" class="short" aria-label="Current clue, tap to expand"><small id="camStop"></small><span id="camText"></span></button>
-  <div class="pill" aria-live="polite"><span class="dot"></span><span id="status">Looking for it</span></div>
-  <div class="bar">
-    <button class="btn ghost" id="back">Back</button>
-    <button class="btn" id="retry" style="display:none">Retry</button>
-    <button class="btn ghost" id="guideBtn">Hide guide</button>
-    <button class="btn ghost" id="typeIt">Type it</button>
+  <div id="guideTip"></div>
+  <button id="back" class="glass circle" aria-label="Back to the clue"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
+  <button id="camClueBtn" class="glass" aria-expanded="false" aria-controls="camClue"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l4 4v14H7z"/><path d="M10 12h5M10 16h5"/></svg>Clue</button>
+  <button id="camClue" aria-label="Clue, tap to close"><small id="camStop"></small><span id="camText"></span></button>
+  <div class="camBottom">
+    <div class="camTools">
+      <button class="glass chip" id="retry" style="display:none">Retry</button>
+      <button class="glass chip" id="guideBtn">Hide guide</button>
+      <button class="glass chip" id="typeIt">Type it</button>
+    </div>
+    <div class="pill" aria-live="polite"><span class="dot"></span><span id="status">Line it up with the outline</span></div>
   </div>
 </section>
 
-<section id="result" class="screen" aria-label="Your photo">
+<section id="result" class="screen dark" aria-label="Your photo">
   <img id="shot" alt="Your photo">
-  <form id="manual" autocomplete="off" novalidate>
-    <label for="answer" id="askText"></label>
-    <div class="row">
-      <input id="answer" type="text" autocapitalize="characters" autocorrect="off" spellcheck="false" enterkeyhint="done" maxlength="12">
-      <button class="btn" id="check" type="submit">Check</button>
-    </div>
-    <p id="answerMsg" aria-live="polite"></p>
-  </form>
-  <div id="badge"><svg viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="14" fill="#fff"/><path d="M8 14.5l4 4 8-9" fill="none" stroke="#00933c" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="badgeText">Found it</span></div>
-  <div class="bar">
-    <button class="btn ghost" id="retake">Retake</button>
-    <button class="btn ghost" id="share" style="display:none"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>Share</button>
-    <button class="btn" id="next"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>Next clue</button>
+  <div id="resCard">
+    <div id="badge"><span class="bIco"><svg class="ck" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><svg class="cm" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg></span><h1 id="badgeText">Found it</h1></div>
+    <div class="tiles" id="resTiles" aria-label="Your code so far"></div>
+    <form id="manual" autocomplete="off" novalidate>
+      <label for="answer" id="askText"></label>
+      <div class="row">
+        <input id="answer" type="text" autocapitalize="characters" autocorrect="off" spellcheck="false" enterkeyhint="done" maxlength="12">
+        <button class="btn secondary" id="check" type="submit">Check</button>
+      </div>
+      <p id="answerMsg" aria-live="polite"></p>
+    </form>
+    <button class="btn" id="next"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span id="nextLabel">Next clue</span></button>
+    <div class="links"><button class="link" id="retake">Retake</button><button class="link" id="share" style="display:none">Share photo</button></div>
   </div>
 </section>
+
+<dialog id="confirmDlg" aria-labelledby="cfTitle">
+  <h2 id="cfTitle">Start over?</h2>
+  <p>This clears the clues you've solved, your photos and your route on this phone.</p>
+  <div class="stack"><button class="btn" id="cfYes">Start over</button><button class="btn secondary" id="cfNo">Keep going</button></div>
+</dialog>
 
 <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script>
@@ -241,6 +374,8 @@ const HUNT = {
     }
   ],
   finalText: "Look at what you've collected. What does it tell you?",
+  /* Where the code leads: directions appear on the map when the last stop is done */
+  final: { name: "767 Fifth Avenue", short: "767 5th", lat: 40.76384, lng: -73.97285, address: "767 5th Ave, New York, NY 10153" },
   nudges: ["Read it as a number and a street.", "You're standing on that street right now.", "Walk north. Look for glass."]
 };
 
@@ -283,8 +418,14 @@ function initMap() {
     map.addSource("shots", { type: "geojson", data: asLine([]) });
     map.addLayer({ id: "shots", type: "line", source: "shots", layout: { "line-cap": "round" },
       paint: { "line-color": "#B3362B", "line-width": 4, "line-dasharray": [0.2, 2.5] } });
+    map.addSource("dir", { type: "geojson", data: asLine([]) });
+    map.addLayer({ id: "dir-casing", type: "line", source: "dir", layout: { "line-cap": "round", "line-join": "round" },
+      paint: { "line-color": "#FFFFFF", "line-width": 9 } });
+    map.addLayer({ id: "dir", type: "line", source: "dir", layout: { "line-cap": "round", "line-join": "round" },
+      paint: { "line-color": "#2E3642", "line-width": 5 } });
     mapReady = true;
     redrawRoute();
+    drawDir();
   });
   map.on("dragstart", () => { follow = false; showCenter(); });
 }
@@ -327,51 +468,92 @@ function totalMiles() {
   for (let k = 1; k < state.path.length; k++) m += metres(state.path[k - 1], state.path[k]);
   return m / 1609.34;
 }
-function setLoc(msg) {
+function setLoc(msg, withButton) {
   const n = $("locNote");
   if (!msg) { n.style.display = "none"; return; }
   $("locText").textContent = msg; n.style.display = "block";
-  $("locBtn").style.display = watchId === null && navigator.geolocation ? "" : "none";
+  const show = !!navigator.geolocation && (withButton || watchId === null);
+  $("locBtn").style.display = show ? "" : "none";
+  $("locBtn").lastChild.textContent = watchId === null ? "Turn on location" : "Try again";
 }
-let firstFix = true;
-function startTracking() {
-  if (watchId !== null) return;
-  if (!navigator.geolocation) { setLoc("This browser can't share your location, so your route won't be drawn."); return; }
-  watchId = navigator.geolocation.watchPosition(onPos, onPosError, { enableHighAccuracy: true, maximumAge: 5000, timeout: 30000 });
-  if (!lastPos) setLoc("Finding your location…");
-}
-/* Ask the phone for location. Resolves "granted", "denied" or "unavailable". */
-function requestLocation() {
-  return new Promise((resolve) => {
-    if (!navigator.geolocation) return resolve("unavailable");
-    navigator.geolocation.getCurrentPosition(
-      (p) => { onPos(p); resolve("granted"); },
-      (e) => resolve(e.code === 1 ? "denied" : "unavailable"),
-      { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
-  });
-}
+let firstFix = true, fixTimer = null;
 const IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+function inAppBrowser() { return /FBAN|FBAV|Instagram|Line\/|Snapchat|TikTok|musical_ly|Twitter|LinkedInApp|Pinterest/i.test(navigator.userAgent); }
+function inAppHelp() { return "This page is open inside another app, which can block location. Open it in " + (IOS ? "Safari" : "Chrome") + " instead: use the app's menu and choose Open in browser."; }
 function blockedHelp() {
   return IOS
     ? "Location is blocked. Open Settings, then Privacy & Security, Location Services, Safari Websites, and choose While Using. Then reload this page."
     : "Location is blocked. Tap the icon to the left of the web address, choose Permissions, turn on Location, then reload this page.";
 }
+function stuckHelp() {
+  return IOS
+    ? "Still can't find your location. Check Settings, then Privacy & Security, and make sure Location Services is on and Safari Websites is set to While Using. Then tap Try again."
+    : "Still can't find your location. Check that location is turned on for your phone and for this browser, then tap Try again.";
+}
+function safeOnPos(p) { try { onPos(p); } catch (e) { console.error(e); } }
+/* Ask the phone for location once. Resolves "granted", "denied" or "unavailable". */
+function requestLocation() {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) return resolve("unavailable");
+    let done = false;
+    const finish = (r) => { if (!done) { done = true; resolve(r); } };
+    navigator.geolocation.getCurrentPosition(
+      (p) => { safeOnPos(p); finish("granted"); },
+      (e) => {
+        if (e.code === 1) return finish("denied");
+        /* precise location timed out: accept a rough one instead */
+        navigator.geolocation.getCurrentPosition((p) => { safeOnPos(p); finish("granted"); }, (e2) => finish(e2.code === 1 ? "denied" : "unavailable"),
+          { enableHighAccuracy: false, maximumAge: 300000, timeout: 10000 });
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
+    setTimeout(() => finish("unavailable"), 30000);
+  });
+}
+function stopTracking() { if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; } clearTimeout(fixTimer); }
+function startTracking() {
+  if (watchId !== null) return;
+  if (!navigator.geolocation) { setLoc("This browser can't share your location, so your route won't be drawn."); return; }
+  watchId = navigator.geolocation.watchPosition(safeOnPos, onPosError, { enableHighAccuracy: true, maximumAge: 5000, timeout: 30000 });
+  if (!lastPos) { setLoc(inAppBrowser() ? inAppHelp() : "Finding your location…"); armWatchdog(); }
+  checkPermission();
+}
+/* If no position arrives, try a rough one, then explain and offer a retry */
+function armWatchdog() {
+  clearTimeout(fixTimer);
+  fixTimer = setTimeout(() => {
+    if (lastPos) return;
+    navigator.geolocation.getCurrentPosition(safeOnPos, () => {}, { enableHighAccuracy: false, maximumAge: 300000, timeout: 12000 });
+    fixTimer = setTimeout(() => { if (!lastPos) setLoc(inAppBrowser() ? inAppHelp() : stuckHelp(), true); }, 14000);
+  }, 8000);
+}
+async function checkPermission() {
+  try {
+    const p = await navigator.permissions.query({ name: "geolocation" });
+    const apply = () => {
+      if (p.state === "denied") { stopTracking(); setLoc(blockedHelp()); }
+      else if (p.state === "prompt" && !lastPos) setLoc("Tap the button so your phone can ask to share your location.", true);
+      else if (p.state === "granted" && watchId === null) startTracking();
+    };
+    apply(); p.onchange = apply;
+  } catch (e) { /* this browser can't report the setting */ }
+}
 $("locBtn").addEventListener("click", async () => {
   $("locBtn").disabled = true;
+  stopTracking();
   setLoc("Asking for your location…");
+  $("locBtn").style.display = "none";
   const r = await requestLocation();
   $("locBtn").disabled = false;
-  if (r === "denied") setLoc(blockedHelp());
-  else { startTracking(); if (r !== "granted") setLoc("Can't find your location right now. It usually comes back outdoors."); }
+  if (r === "denied") { setLoc(blockedHelp()); return; }
+  startTracking();
+  if (r !== "granted") setLoc(inAppBrowser() ? inAppHelp() : stuckHelp(), true);
 });
 function onPosError(e) {
-  if (e.code === 1) {
-    navigator.geolocation.clearWatch(watchId); watchId = null;
-    setLoc(blockedHelp());
-  } else if (e.code === 2) setLoc("Can't find your location right now. It usually comes back outdoors.");
-  else setLoc("Still looking for your location…");
+  if (e.code === 1) { stopTracking(); setLoc(blockedHelp()); }
+  else if (!lastPos) { /* keep waiting; the watchdog explains if it takes too long */ }
 }
 function onPos(p) {
+  clearTimeout(fixTimer);
   const { latitude: lat, longitude: lng, accuracy } = p.coords;
   lastPos = { lat, lng, accuracy };
   setLoc(accuracy > 60 ? "Your location is approximate. It gets sharper outdoors." : null);
@@ -383,6 +565,7 @@ function onPos(p) {
     if (firstFix) { map.jumpTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), 16) }); firstFix = false; }
     else if (follow) map.easeTo({ center: [lng, lat], duration: 600 });
   }
+  if (state.finishedAt && dirOrigin && metres(dirOrigin, [lat, lng]) > 150) showDirections();
   const hunting = state.startedAt && !state.finishedAt;
   if (hunting && accuracy <= 60) {
     const now = Date.now(), last = state.path[state.path.length - 1];
@@ -424,13 +607,18 @@ function showScreen(id) {
   if (!onMap) $("center").classList.remove("on"); else setTimeout(showCenter, 60);
 }
 
-function boardHTML(popIndex) {
+function boardHTML(popIndex, curIndex) {
   return HUNT.stops.map((s, k) => {
     const got = state.found[k];
     return [...s.char].map((_, n) => got
-      ? `<div class="slot filled${k === popIndex ? " pop" : ""}">${esc(got[n] || "")}</div>`
+      ? `<div class="slot filled${k === popIndex ? " pop" : ""}${k === curIndex ? " cur" : ""}">${esc(got[n] || "")}</div>`
       : `<div class="slot${k === state.i ? " next" : ""}"></div>`).join("");
   }).join("");
+}
+function codeLabel() {
+  const parts = [];
+  HUNT.stops.forEach((s, k) => [...s.char].forEach((_, n) => parts.push(state.found[k] ? state.found[k][n] : "empty")));
+  return "Your code so far: " + parts.join(", ");
 }
 
 function pastHTML() {
@@ -440,96 +628,211 @@ function pastHTML() {
     done.map((s, k) => `<li><b>${esc(state.found[k] || "")}</b><span>${esc(s.clue)}</span></li>`).join("")}</ol></details>`;
 }
 
-let collapsed = false, nudgeIx = 0;
+let collapsed = false, nudgeIx = 0, introStep = 0;
 function render(popIndex) {
   stopCamera();
   $("board").innerHTML = boardHTML(popIndex);
+  $("board").setAttribute("aria-label", codeLabel());
   updateStats();
   const sh = $("sheetIn");
 
-  if (!state.startedAt) {
-    sh.innerHTML = `
-      <div class="rule"></div>
-      <h1>A walk through Midtown</h1>
-      <p class="note">You'll get one clue at a time. Each leads to a place in Manhattan. When you find it, open the camera and point it at what the clue describes. The page will recognize it, give you a piece of a code, and show the next clue.</p>
-      <p class="note">This page uses your location to draw your route on the map. It stays on your phone.</p>
-      <p class="note" id="startMsg" aria-live="polite"></p>
-      <div class="actions">
-        <button class="btn" id="startBtn"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>Allow location and start</button>
-        <button class="link" id="skipLoc" style="display:none">Start without location</button>
-      </div>`;
-    const begin = () => { state.startedAt = Date.now(); save(); startTracking(); keepAwake(); render(); };
-    $("startBtn").onclick = async () => {
-      const b = $("startBtn"); b.disabled = true;
-      $("startMsg").textContent = "Your phone will ask to share your location. Choose Allow.";
-      const r = await requestLocation();
-      b.disabled = false;
-      if (r === "granted") return begin();
-      if (r === "denied") {
-        $("startMsg").textContent = blockedHelp().replace("Then reload this page.", "Then reload this page, or start without it.");
-      } else {
-        $("startMsg").textContent = "Couldn't get your location just now. Try again outdoors, or start without it.";
-      }
-      b.lastChild.textContent = "Try again";
-      $("skipLoc").style.display = "";
-    };
-    $("skipLoc").onclick = begin;
-    showScreen(null);
-    return;
-  }
+  if (!state.startedAt) { showScreen(["introA", "introB", "introC"][introStep]); return; }
 
   if (state.i >= HUNT.stops.length) {
     if (!state.finishedAt) { state.finishedAt = Date.now(); save(); }
+    sh.classList.remove("collapsed");
     sh.innerHTML = `
-      <div class="rule"></div>
-      <h1>${esc(HUNT.finalText)}</h1>
-      <div class="row"><div><b>${fmt(elapsed())}</b><span>Time</span></div><div><b>${totalMiles().toFixed(1)} mi</b><span>Walked</span></div></div>
-      <p class="hint" id="nudgeText"></p>
-      <div class="actions"><button class="link" id="nudgeBtn">I need a nudge</button></div>
-      ${pastHTML()}`;
+      <div class="grab" aria-hidden="true"><span></span></div>
+      <div class="body fin">
+        <div class="tiles finTiles" aria-label="${esc(codeLabel().replace(" so far", ""))}">${boardHTML()}</div>
+        <h1 class="finQ">${esc(HUNT.finalText)}</h1>
+        <div class="stats"><div><b>${fmt(elapsed())}</b><span>Time</span></div><div><b>${totalMiles().toFixed(1)} mi</b><span>Walked</span></div></div>
+        <p class="hint" id="nudgeText" style="text-align:left"></p>
+        <button class="link center" id="nudgeBtn">I need a nudge</button>
+        <div class="dirBox">
+          <h2>Your last walk</h2>
+          <p id="dirSum">Finding a walking route…</p>
+          <ol id="dirSteps"></ol>
+          <a class="btn" id="mapsLink" target="_blank" rel="noopener"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-8 18-2-8z"/></svg>Open in Maps</a>
+        </div>
+        ${pastHTML()}
+        <button class="link quiet" id="restartBtn">Start over</button>
+      </div>`;
     $("nudgeBtn").onclick = () => {
       if (nudgeIx < HUNT.nudges.length) { const n = $("nudgeText"); n.textContent = HUNT.nudges.slice(0, ++nudgeIx).join(" "); n.style.display = "block"; }
       if (nudgeIx >= HUNT.nudges.length) $("nudgeBtn").style.display = "none";
     };
+    $("restartBtn").onclick = askStartOver;
+    $("mapsLink").href = mapsUrl();
     showScreen(null);
-    fitAll();
+    showDirections();
     return;
   }
 
   const s = HUNT.stops[state.i];
   sh.innerHTML = `
-    <div class="handle"><p class="kicker">Stop ${state.i + 1} of ${HUNT.stops.length}</p><button class="link" id="toggle">${collapsed ? "Show clue" : "Hide clue"}</button></div>
+    <button class="grab" id="toggle" aria-label="${collapsed ? "Show the clue" : "Hide the clue"}" aria-expanded="${!collapsed}"><span></span></button>
+    <p class="kicker">Stop ${state.i + 1} of ${HUNT.stops.length}${collapsed ? ". Tap to show the clue." : ""}</p>
     <div class="body">
-      <div class="rule"></div>
       <p class="clue">${esc(s.clue)}</p>
       <p class="hint" id="hintText">${esc(s.hint)}</p>
-      <div class="actions">
-        ${s.answer
-          ? `<div class="answerRow"><input id="answerIn" inputmode="text" autocomplete="off" aria-label="Your answer" placeholder="Type your answer"><button class="btn" id="checkBtn">Check</button></div>`
-          : `<button class="btn" id="openCam"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg>Camera</button>`}
-        <button class="link" id="hintBtn">Show a hint</button>
-      </div>
+      <button class="btn" id="openCam"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg>Camera</button>
+      <button class="link center" id="hintBtn" style="margin-top:-8px">Show a hint</button>
       <p class="msg" id="msg1" aria-live="polite"></p>
       ${pastHTML()}
+      <button class="link quiet" id="restartBtn">Start over</button>
     </div>`;
-  $("sheetIn").classList.toggle("collapsed", collapsed);
+  sh.classList.toggle("collapsed", collapsed);
   $("toggle").onclick = () => { collapsed = !collapsed; render(); };
+  sh.querySelector(".kicker").onclick = () => { if (collapsed) { collapsed = false; render(); } };
   $("hintBtn").onclick = () => { $("hintText").style.display = "block"; $("hintBtn").style.display = "none"; };
-  if (s.answer) {
-    const check = () => {
-      const raw = $("answerIn").value.trim();
-      if (!raw) { $("msg1").textContent = "Type your answer first."; return; }
-      /* only the digits count, so "67", "67th" and "E 67 St" all work */
-      if (raw.replace(/\D/g, "") === s.answer) { recordShot(); advance(); }
-      else $("msg1").textContent = "Not quite. Take another look.";
-    };
-    $("checkBtn").onclick = check;
-    $("answerIn").onkeydown = (e) => { if (e.key === "Enter") check(); };
-    $("answerIn").oninput = () => $("msg1").textContent = "";
-  } else $("openCam").onclick = openCamera;
+  $("openCam").onclick = openCamera;
+  $("restartBtn").onclick = askStartOver;
   showScreen(null);
   if (s.ref) loadCv().catch(() => {});
 }
+
+/* ---------- Opening screens ---------- */
+function goIntro(n) {
+  introStep = n; render();
+  const b = document.querySelector(".screen.on .btn"); if (b) b.focus({ preventScroll: true });
+}
+$("goA").onclick = () => goIntro(1);
+$("backB").onclick = () => goIntro(0);
+$("goB").onclick = () => goIntro(2);
+$("backC").onclick = () => goIntro(1);
+function begin() { state.startedAt = Date.now(); save(); startTracking(); keepAwake(); render(); }
+$("startBtn").onclick = async () => {
+  const b = $("startBtn"), m = $("startMsg");
+  b.disabled = true; m.classList.remove("err");
+  m.textContent = "Your phone will ask to share your location. Choose Allow.";
+  const r = await requestLocation();
+  b.disabled = false;
+  if (r === "granted") { m.textContent = ""; return begin(); }
+  m.classList.add("err");
+  m.textContent = r === "denied"
+    ? blockedHelp().replace("Then reload this page.", "Then reload this page, or start without it.")
+    : (inAppBrowser() ? inAppHelp() : "Couldn't get your location just now. Try again, ideally outdoors, or start without it.");
+  b.lastChild.textContent = "Try again";
+  $("skipLoc").style.display = "";
+};
+$("skipLoc").onclick = begin;
+
+/* ---------- Start over ---------- */
+function askStartOver() {
+  const d = $("confirmDlg");
+  if (d.showModal) d.showModal();
+  else if (confirm("Start over? This clears your progress on this phone.")) startOver();
+}
+$("cfNo").onclick = () => $("confirmDlg").close();
+$("cfYes").onclick = () => { $("confirmDlg").close(); startOver(); };
+function startOver() {
+  stopCamera();
+  try { localStorage.removeItem(HUNT.key); } catch (e) {}
+  state = { i: 0, found: [], startedAt: null, finishedAt: null, path: [], shots: [] };
+  nudgeIx = 0; collapsed = false; introStep = 0;
+  $("startMsg").textContent = ""; $("skipLoc").style.display = "none";
+  $("startBtn").lastChild.textContent = "Allow location and start";
+  redrawRoute();
+  clearDir();
+  render();
+}
+
+/* ---------- Directions to the final spot ---------- */
+let dirData = null, dirOrigin = null, dirBusy = false, destMarker = null;
+function mapsUrl() {
+  const f = HUNT.final, q = encodeURIComponent(f.address);
+  return IOS ? `https://maps.apple.com/?daddr=${q}&dirflg=w` : `https://www.google.com/maps/dir/?api=1&destination=${q}&travelmode=walking`;
+}
+function dirOriginNow() {
+  if (lastPos) return [lastPos.lat, lastPos.lng];
+  const last = state.shots.filter(Boolean).pop();
+  if (last) return [last.lat, last.lng];
+  return [40.76199, -73.97437]; /* Harry Winston, the last stop */
+}
+function distText(m) {
+  const ft = m * 3.28084;
+  return ft < 528 ? `${Math.max(50, Math.round(ft / 50) * 50)} ft` : `${(m / 1609.34).toFixed(1)} mi`;
+}
+/* Manhattan's grid is tilted about 29 degrees; up the avenue is what New Yorkers call north */
+function compass(deg) { deg -= 29; return ["north", "northeast", "east", "southeast", "south", "southwest", "west", "northwest"][Math.round(((deg % 360) + 360) % 360 / 45) % 8]; }
+function stepText(st) {
+  const m = st.maneuver || {}, name = st.name ? st.name.replace(/\b5th Avenue\b/i, "Fifth Avenue") : "";
+  const onto = name ? ` onto ${name}` : "";
+  const mod = (m.modifier || "").replace("uturn", "around");
+  switch (m.type) {
+    case "depart": return `Head ${compass(m.bearing_after || 0)}${name ? ` on ${name}` : ""}`;
+    case "arrive": return `Arrive at ${HUNT.final.name}`;
+    case "turn": case "end of road": case "fork": case "on ramp": case "off ramp":
+      return mod === "straight" ? `Continue${onto}` : `Turn ${mod}${onto}`;
+    case "roundabout": case "rotary": return `Go around the circle${onto ? ` and exit${onto}` : ""}`;
+    default: return name ? `Continue onto ${name}` : "Continue";
+  }
+}
+async function fetchRoute(from) {
+  const f = HUNT.final;
+  const url = `https://routing.openstreetmap.de/routed-foot/route/v1/foot/${from[1]},${from[0]};${f.lng},${f.lat}?overview=full&geometries=geojson&steps=true`;
+  const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 12000);
+  try {
+    const r = await fetch(url, { signal: ctl.signal });
+    const d = await r.json();
+    if (d.code !== "Ok" || !d.routes || !d.routes[0]) throw new Error("no route");
+    const route = d.routes[0];
+    const steps = [];
+    route.legs[0].steps.forEach(st => {
+      const text = stepText(st), last = steps[steps.length - 1];
+      if (last && last.text === text) { last.m += st.distance; return; }   /* merge repeats */
+      if (st.maneuver.type !== "arrive" && st.distance < 8 && steps.length) return; /* skip tiny jogs */
+      steps.push({ text, m: st.distance });
+    });
+    return { coords: route.geometry.coordinates, metres: route.distance, minutes: route.duration / 60, steps };
+  } finally { clearTimeout(t); }
+}
+async function showDirections(force) {
+  const f = HUNT.final, from = dirOriginNow();
+  if (dirBusy) return;
+  if (!force && dirData && dirOrigin && metres(dirOrigin, from) < 150) { renderDir(); return; }
+  dirBusy = true; dirOrigin = from;
+  try { dirData = await fetchRoute(from); }
+  catch (e) {
+    const d = metres(from, [f.lat, f.lng]);
+    dirData = { coords: [[from[1], from[0]], [f.lng, f.lat]], metres: d, minutes: d / 80, steps: [], straight: true };
+  }
+  dirBusy = false;
+  renderDir();
+}
+function renderDir() {
+  if (!dirData) return;
+  const sum = $("dirSum"), list = $("dirSteps");
+  if (sum) {
+    const mins = Math.max(1, Math.round(dirData.minutes));
+    sum.textContent = dirData.straight
+      ? `About ${distText(dirData.metres)} away, roughly a ${mins} minute walk. Tap Open in Maps for turn-by-turn directions.`
+      : `${distText(dirData.metres)}, about a ${mins} minute walk.`;
+  }
+  if (list) list.innerHTML = dirData.steps.map(st => `<li>${esc(st.text)}${st.m >= 8 ? `<span>${distText(st.m)}</span>` : ""}</li>`).join("");
+  drawDir();
+  fitDir();
+}
+function drawDir() {
+  if (!map) return;
+  const on = !!(dirData && state.finishedAt);
+  if (mapReady) map.getSource("dir").setData(on ? asLine(dirData.coords) : asLine([]));
+  if (on && !destMarker) {
+    const el = document.createElement("div"); el.className = "dest"; el.textContent = HUNT.final.short;
+    destMarker = new maplibregl.Marker({ element: el, anchor: "bottom", offset: [0, -6] }).setLngLat([HUNT.final.lng, HUNT.final.lat]).addTo(map);
+  } else if (!on && destMarker) { destMarker.remove(); destMarker = null; }
+}
+function fitDir() {
+  if (!map || !dirData) return;
+  const b = new maplibregl.LngLatBounds(dirData.coords[0], dirData.coords[0]);
+  dirData.coords.forEach(c => b.extend(c));
+  if (lastPos) b.extend([lastPos.lng, lastPos.lat]);
+  const h = window.innerHeight, sheetH = Math.min($("sheetIn").offsetHeight, h * .64);
+  map.fitBounds(b, { padding: { top: 110, left: 50, right: 50, bottom: Math.min(sheetH + 30, h - 220) }, maxZoom: 17, duration: 800 });
+  follow = false; showCenter();
+}
+function clearDir() { dirData = null; dirOrigin = null; drawDir(); }
 
 function fitAll() {
   if (!map) return;
@@ -638,7 +941,9 @@ let stream = null, running = false, stable = 0, lastFound = null, timer = null;
 function setStatus(t) { $("status").textContent = t; }
 function stopCamera() { stopLoop(); if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; } }
 
-$("camClue").addEventListener("click", () => $("camClue").classList.toggle("short"));
+function setClueOpen(on) { $("camClue").classList.toggle("open", on); $("camClueBtn").setAttribute("aria-expanded", String(on)); }
+$("camClueBtn").addEventListener("click", () => setClueOpen(!$("camClue").classList.contains("open")));
+$("camClue").addEventListener("click", () => setClueOpen(false));
 let guideOn = true;
 function placeGuideTip() {
   requestAnimationFrame(() => {
@@ -667,9 +972,9 @@ async function openCamera() {
   }
   video.srcObject = stream;
   await video.play().catch(() => {});
-  $("camStop").textContent = `Stop ${state.i + 1} of ${HUNT.stops.length} · tap to read the whole clue`;
+  $("camStop").textContent = `Stop ${state.i + 1} of ${HUNT.stops.length}`;
   $("camText").textContent = s.clue;
-  $("camClue").classList.add("short");
+  setClueOpen(false);
   $("guide").innerHTML = s.guide || GENERIC_GUIDE;
   unsnap(); $("snap").dataset.stop = "";
   $("guide").style.width = s.guideW || "";
@@ -692,7 +997,7 @@ async function startDetection() {
     $("retry").style.display = "";
     return;
   }
-  setStatus("Looking for it");
+  setStatus("Line it up with the outline");
   startLoop();
 }
 $("retry").addEventListener("click", () => { $("retry").style.display = "none"; startDetection(); });
@@ -725,7 +1030,7 @@ function analyse() {
     $("guide").classList.add("off"); $("guideTip").style.opacity = "0";
     setStatus("Hold still…");
     if (stable >= STABLE_FRAMES) capture(true);
-  } else { stable = 0; unsnap(); setStatus("Looking for it"); if (guideOn) { $("guide").classList.remove("off"); $("guideTip").style.opacity = "1"; } }
+  } else { stable = 0; unsnap(); setStatus("Line it up with the outline"); if (guideOn) { $("guide").classList.remove("off"); $("guideTip").style.opacity = "1"; } }
 }
 
 /* ---------- Outline that locks onto the real object ---------- */
@@ -861,10 +1166,9 @@ function capture(found) {
   stopCamera();
   foundThisPhoto = found;
   $("shot").src = out.toDataURL("image/jpeg", .9);
-  const badge = $("badge");
-  badge.classList.toggle("found", found);
-  badge.querySelector("svg").style.display = found ? "" : "none";
+  $("badge").classList.toggle("found", found);
   $("badgeText").textContent = found ? "Found it" : "Photo taken";
+  $("nextLabel").textContent = state.i === HUNT.stops.length - 1 ? "See what you collected" : "Next clue";
   const accepted = found;
   $("next").style.display = accepted ? "" : "none";
   $("share").style.display = canShareFiles() ? "" : "none";
@@ -878,6 +1182,7 @@ function capture(found) {
   recordShot();
   if (accepted) state.found[state.i] = HUNT.stops[state.i].char;
   save();
+  $("resTiles").innerHTML = boardHTML(accepted ? state.i : -1, accepted ? state.i : -1);
   if (found && navigator.vibrate) navigator.vibrate([60, 40, 60]);
   showScreen("result");
 }
@@ -903,9 +1208,9 @@ $("manual").addEventListener("submit", (e) => {
     inp.blur();
     state.found[state.i] = s.char; save();
     $("manual").classList.remove("on");
-    const badge = $("badge");
-    badge.classList.add("found"); badge.querySelector("svg").style.display = "";
+    $("badge").classList.add("found");
     $("badgeText").textContent = "Got it";
+    $("resTiles").innerHTML = boardHTML(state.i, state.i);
     $("next").style.display = "";
     if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
   } else {
