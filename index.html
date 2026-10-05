@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hunt camera</title>
+<style>
+  :root {
+    --sign: #000000;
+    --ink: #ffffff;
+    --muted: #a7a9ac;
+    --signal: #ee352e;
+    --panel: rgba(0,0,0,0.72);
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --sign:#000; --ink:#fff; } }
+  :root[data-theme="dark"] { --sign:#000; --ink:#fff; }
+  *, *::before, *::after { box-sizing: inherit; }
+  html { height: 100%; scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body {
+    margin: 0; height: 100%; background: var(--sign); color: var(--ink);
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased; overflow: hidden;
+  }
+
+  /* Start screen, styled like a station sign */
+  #intro {
+    position: fixed; inset: 0; display: flex; flex-direction: column; justify-content: center;
+    padding: calc(env(safe-area-inset-top, 0px) + 32px) 28px calc(env(safe-area-inset-bottom, 0px) + 32px);
+    max-width: 560px; margin: 0 auto;
+  }
+  .rule { height: 3px; background: var(--ink); margin-bottom: 18px; }
+  #intro h1 { font-size: clamp(2.4rem, 11vw, 3.6rem); font-weight: 700; letter-spacing: -0.02em; margin: 0 0 6px; line-height: 1; }
+  #intro p { font-size: 1.05rem; line-height: 1.45; color: var(--muted); margin: 0 0 14px; max-width: 34ch; }
+  .ring { display:inline-block; width: 1.1em; height: 1.1em; border: 3px solid var(--signal); border-radius: 50%; vertical-align: -0.2em; }
+  button {
+    font: inherit; font-weight: 700; font-size: 1.1rem; color: var(--sign); background: var(--ink);
+    border: 0; border-radius: 999px; padding: 16px 26px; margin-top: 14px; align-self: flex-start; cursor: pointer;
+  }
+  button:focus-visible, input:focus-visible { outline: 3px solid var(--signal); outline-offset: 3px; }
+  #error { color: var(--ink); background: #3a0f0d; border-left: 4px solid var(--signal); padding: 12px 14px; margin-top: 18px; line-height: 1.45; display: none; }
+
+  /* Camera view */
+  #cam { position: fixed; inset: 0; display: none; }
+  video, #overlay { position: absolute; inset: 0; width: 100%; height: 100%; }
+  video { object-fit: cover; background: #000; }
+  #overlay { pointer-events: none; }
+  #controls {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    padding: 14px 18px calc(env(safe-area-inset-bottom, 0px) + 14px);
+    background: var(--panel); display: flex; align-items: center; gap: 14px;
+  }
+  #controls label { font-size: 0.9rem; color: var(--muted); white-space: nowrap; }
+  #controls input { flex: 1; accent-color: var(--signal); }
+  #hide { margin: 0; padding: 10px 16px; font-size: 0.95rem; }
+  #tip {
+    position: absolute; left: 18px; right: 18px; top: calc(env(safe-area-inset-top, 0px) + 14px);
+    background: var(--panel); padding: 10px 14px; border-radius: 10px; font-size: 0.95rem; line-height: 1.4;
+    transition: opacity .6s; text-align: center;
+  }
+  .hidden-ui #controls, .hidden-ui #tip { display: none; }
+  @media (prefers-reduced-motion: reduce) { #tip { transition: none; } }
+</style>
+</head>
+<body>
+
+<section id="intro">
+  <div class="rule"></div>
+  <h1 id="stopTitle">Stop 1</h1>
+  <p>Point your camera at the place from your clue. Move until the white outlines match what you see.</p>
+  <p>Whatever sits inside the <span class="ring" aria-hidden="true"></span> red circle is your piece. Take a screenshot and text it back.</p>
+  <button id="start">Open camera</button>
+  <div id="error" role="alert"></div>
+</section>
+
+<section id="cam" aria-label="Camera with guide">
+  <video id="video" playsinline muted autoplay></video>
+  <div id="overlay"></div>
+  <div id="tip">Line up the outlines. Tap the screen to hide the buttons, then screenshot.</div>
+  <div id="controls">
+    <label for="opacity">Guide</label>
+    <input id="opacity" type="range" min="20" max="100" value="85">
+    <button id="hide">Hide buttons</button>
+  </div>
+</section>
+
+<script>
+/* Each stop is opened with ?s=CODE. Random codes stop the hunter from guessing later stops.
+   With no code, the page shows stop 1 (test mode). */
+const STOPS = {
+  k7f2: {
+    title: "Stop 1",
+    /* Placeholder trace of an overhead subway sign at Grand Central.
+       Replace with a tracing of your own scouting photo. viewBox is portrait 900x1600. */
+    svg: `
+<svg viewBox="0 0 900 1600" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+  <g fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    <!-- ceiling arch hint -->
+    <path d="M40 420 Q450 160 860 420" stroke-dasharray="18 16" opacity=".7"/>
+    <!-- hanging rods -->
+    <line x1="200" y1="340" x2="200" y2="560"/>
+    <line x1="700" y1="340" x2="700" y2="560"/>
+    <!-- sign body -->
+    <rect x="60" y="560" width="780" height="420" rx="10"/>
+    <!-- white rule along the top of the sign -->
+    <line x1="90" y1="610" x2="810" y2="610"/>
+    <!-- text placeholders: shapes only, nothing readable -->
+    <rect x="100" y="650" width="330" height="70" rx="10" opacity=".85"/>
+    <rect x="100" y="740" width="210" height="34" rx="8" opacity=".55"/>
+    <!-- arrow -->
+    <path d="M760 700 L700 660 M760 700 L700 740 M760 700 L620 700"/>
+    <!-- row of line circles -->
+    <circle cx="170" cy="880" r="50"/>
+    <circle cx="310" cy="880" r="50"/>
+    <circle cx="450" cy="880" r="50"/>
+    <circle cx="590" cy="880" r="50"/>
+    <circle cx="730" cy="880" r="50"/>
+  </g>
+  <!-- the answer circle -->
+  <circle cx="590" cy="880" r="82" fill="none" stroke="#ee352e" stroke-width="12"/>
+</svg>`
+  }
+};
+
+const params = new URLSearchParams(location.search);
+const code = params.get("s");
+const stop = STOPS[code] || STOPS.k7f2;
+
+document.getElementById("stopTitle").textContent = stop.title;
+document.title = stop.title;
+const overlay = document.getElementById("overlay");
+overlay.innerHTML = stop.svg;
+const svgEl = overlay.querySelector("svg");
+svgEl.setAttribute("width", "100%");
+svgEl.setAttribute("height", "100%");
+
+const errorBox = document.getElementById("error");
+function showError(msg) { errorBox.textContent = msg; errorBox.style.display = "block"; }
+
+document.getElementById("start").addEventListener("click", async () => {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    showError("This browser can't open the camera here. Open the link directly in Safari (iPhone) or Chrome (Android).");
+    return;
+  }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+      audio: false
+    });
+    const video = document.getElementById("video");
+    video.srcObject = stream;
+    await video.play().catch(() => {});
+    document.getElementById("intro").style.display = "none";
+    document.getElementById("cam").style.display = "block";
+    setTimeout(() => { document.getElementById("tip").style.opacity = "0"; }, 6000);
+  } catch (e) {
+    if (e && e.name === "NotAllowedError") {
+      showError("Camera access was blocked. Allow camera access for this page in your browser settings, then reload. If you opened this inside another app, open it in Safari or Chrome instead.");
+    } else if (e && e.name === "NotFoundError") {
+      showError("No camera was found on this device.");
+    } else {
+      showError("The camera didn't start (" + (e && e.name ? e.name : "unknown error") + "). Try opening the link directly in Safari or Chrome.");
+    }
+  }
+});
+
+document.getElementById("opacity").addEventListener("input", (e) => {
+  overlay.style.opacity = e.target.value / 100;
+});
+overlay.style.opacity = 0.85;
+
+const cam = document.getElementById("cam");
+document.getElementById("hide").addEventListener("click", (e) => {
+  e.stopPropagation();
+  cam.classList.add("hidden-ui");
+});
+cam.addEventListener("click", (e) => {
+  if (e.target.closest("#controls")) return;
+  cam.classList.toggle("hidden-ui");
+});
+</script>
+</body>
+</html>
