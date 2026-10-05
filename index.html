@@ -41,6 +41,8 @@
   #top { position: fixed; left: 0; right: 0; top: 0; z-index: 20; pointer-events: none;
     padding: calc(env(safe-area-inset-top,0px) + 10px) 12px 0; display: none; }
   #top.on { display: block; }
+  #locNote { display: none; width: fit-content; max-width: min(92vw, 520px); margin: 8px auto 0; background: var(--sign); color: var(--ink);
+    border-radius: 14px; padding: 8px 14px; font-size: .92rem; line-height: 1.35; text-align: center; box-shadow: 0 0 0 2px var(--dim); }
   .topRow { display: flex; gap: 10px; align-items: stretch; max-width: 560px; margin: 0 auto; }
   .board { flex: 1; display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; background: var(--panel); padding: 8px; border-radius: 14px; }
   .slot { aspect-ratio: 3 / 4; border-radius: 6px; background: #111; box-shadow: inset 0 0 0 2px var(--dim);
@@ -94,6 +96,9 @@
     pointer-events: none; opacity: .75; transition: opacity .3s; }
   #guide svg { display: block; width: 100%; height: auto; filter: drop-shadow(0 0 2px rgba(0,0,0,.9)); }
   #guide.off { opacity: 0; }
+  #snap { position: absolute; left: 0; top: 0; z-index: 1; pointer-events: none; transform-origin: 0 0; display: none;
+    filter: drop-shadow(0 0 2px rgba(0,0,0,.85)); }
+  #snap svg { display: block; overflow: visible; }
   #guideTip { position: absolute; left: 50%; transform: translateX(-50%); z-index: 1; white-space: nowrap;
     background: var(--panel); padding: 6px 12px; border-radius: 12px; font-size: .9rem; pointer-events: none; transition: opacity .3s; }
   #shot { object-fit: contain; }
@@ -124,6 +129,7 @@
     <div class="board" id="board" aria-label="Your collected pieces"></div>
     <div class="stats" aria-live="off"><b id="clock">0:00</b><span id="dist">0.0 mi</span></div>
   </div>
+  <div id="locNote" role="status" aria-live="polite"></div>
 </div>
 
 <button id="center" class="chip">Center on me</button>
@@ -134,6 +140,7 @@
   <video id="video" playsinline muted autoplay></video>
   <canvas id="live"></canvas>
   <div id="guide" aria-hidden="true"></div>
+  <div id="snap" aria-hidden="true"></div>
   <div id="guideTip">Line it up with the outline</div>
   <button id="camClue" class="short" aria-label="Current clue, tap to expand"><small id="camStop"></small><span id="camText"></span></button>
   <div class="pill" aria-live="polite"><span class="dot"></span><span id="status">Looking for it</span></div>
@@ -141,7 +148,6 @@
     <button class="btn ghost" id="back">Back</button>
     <button class="btn" id="retry" style="display:none">Retry</button>
     <button class="btn ghost" id="guideBtn">Hide guide</button>
-    <button class="btn ghost" id="manual">Take photo anyway</button>
   </div>
 </section>
 
@@ -207,7 +213,8 @@ const HUNT = {
 
 
 const GENERIC_GUIDE = '<svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"><path d="M4 44V4h40M256 4h40v40M296 156v40h-40M44 196H4v-40"/></svg>';
-const MIN_INLIERS = 30, STABLE_FRAMES = 3, PROC_W = 640, INTERVAL = 160;
+const MIN_INLIERS = 20, STABLE_FRAMES = 2, PROC_W = 800, INTERVAL = 160;
+const REF_SCALES = [1, 0.6, 0.36]; /* match the reference at several sizes, so a target far away still counts */
 const $ = (id) => document.getElementById(id);
 const esc = (t) => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
@@ -287,25 +294,45 @@ function totalMiles() {
   for (let k = 1; k < state.path.length; k++) m += metres(state.path[k - 1], state.path[k]);
   return m / 1609.34;
 }
+function setLoc(msg) {
+  const n = $("locNote");
+  if (!msg) { n.style.display = "none"; return; }
+  n.textContent = msg; n.style.display = "block";
+}
+let firstFix = true;
 function startTracking() {
-  if (watchId !== null || !navigator.geolocation) return;
-  watchId = navigator.geolocation.watchPosition(onPos, () => {}, { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 });
+  if (watchId !== null) return;
+  if (!navigator.geolocation) { setLoc("This browser can't share your location, so your route won't be drawn."); return; }
+  setLoc("Finding your location…");
+  watchId = navigator.geolocation.watchPosition(onPos, onPosError, { enableHighAccuracy: true, maximumAge: 5000, timeout: 30000 });
+}
+function onPosError(e) {
+  if (e.code === 1) {
+    setLoc("Location is blocked. Allow location for this site in your phone's settings, then reload the page.");
+    navigator.geolocation.clearWatch(watchId); watchId = null;
+  } else if (e.code === 2) setLoc("Can't find your location right now. It usually comes back outdoors.");
+  else setLoc("Still looking for your location…");
 }
 function onPos(p) {
   const { latitude: lat, longitude: lng, accuracy } = p.coords;
   lastPos = { lat, lng, accuracy };
+  setLoc(accuracy > 60 ? "Your location is approximate. It gets sharper outdoors." : null);
   if (map) {
     if (!youMarker) {
       const el = document.createElement("div"); el.className = "you";
       youMarker = new maplibregl.Marker({ element: el }).setLngLat([lng, lat]).addTo(map);
     } else youMarker.setLngLat([lng, lat]);
-    if (follow) map.easeTo({ center: [lng, lat], duration: 600 });
+    if (firstFix) { map.jumpTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), 16) }); firstFix = false; }
+    else if (follow) map.easeTo({ center: [lng, lat], duration: 600 });
   }
   const hunting = state.startedAt && !state.finishedAt;
-  if (hunting && accuracy <= 40) {
-    const last = state.path[state.path.length - 1];
-    if (!last || metres(last, [lat, lng]) >= 10) {
-      state.path.push([+lat.toFixed(6), +lng.toFixed(6), Date.now()]);
+  if (hunting && accuracy <= 60) {
+    const now = Date.now(), last = state.path[state.path.length - 1];
+    const d = last ? metres(last, [lat, lng]) : Infinity;
+    /* skip GPS jumps faster than a brisk run */
+    const tooFast = last && d / Math.max(1, (now - last[2]) / 1000) > 7;
+    if (!last || (d >= 10 && !tooFast)) {
+      state.path.push([+lat.toFixed(6), +lng.toFixed(6), now]);
       save();
       redrawPath();
       updateStats();
@@ -499,17 +526,33 @@ function loadCv() {
 let orb = null, matcher = null;
 async function prepareRef(s) {
   if (s._des) return;
-  if (!orb) { orb = new cv.ORB(1000); matcher = new cv.BFMatcher(cv.NORM_HAMMING, false); }
+  if (!orb) { orb = new cv.ORB(2000); matcher = new cv.BFMatcher(cv.NORM_HAMMING, false); }
+  const refOrb = new cv.ORB(1000);
   const img = new Image(); img.src = s.ref; await img.decode();
   const c = document.createElement("canvas");
   c.width = img.naturalWidth; c.height = img.naturalHeight;
   c.getContext("2d").drawImage(img, 0, 0);
   const src = cv.imread(c), gray = new cv.Mat(), none = new cv.Mat();
   cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
-  s._kp = new cv.KeyPointVector(); s._des = new cv.Mat();
-  orb.detectAndCompute(gray, none, s._kp, s._des);
+  const pts = [], chunks = [];
+  for (const sc of REF_SCALES) {
+    const g = new cv.Mat();
+    if (sc === 1) gray.copyTo(g); else cv.resize(gray, g, new cv.Size(Math.round(gray.cols * sc), Math.round(gray.rows * sc)), 0, 0, cv.INTER_AREA);
+    const kp = new cv.KeyPointVector(), des = new cv.Mat();
+    refOrb.detectAndCompute(g, none, kp, des);
+    if (des.rows > 0) {
+      for (let k = 0; k < kp.size(); k++) { const pt = kp.get(k).pt; pts.push(pt.x / sc, pt.y / sc); }
+      chunks.push(des.data.slice());
+    }
+    g.delete(); kp.delete(); des.delete();
+  }
+  const total = pts.length / 2;
+  s._des = new cv.Mat(total, 32, cv.CV_8U);
+  let off = 0;
+  for (const ch of chunks) { s._des.data.set(ch, off); off += ch.length; }
+  s._pts = pts;
   s._w = c.width; s._h = c.height;
-  src.delete(); gray.delete(); none.delete();
+  src.delete(); gray.delete(); none.delete(); refOrb.delete();
 }
 
 
@@ -553,6 +596,7 @@ async function openCamera() {
   $("camText").textContent = s.clue;
   $("camClue").classList.add("short");
   $("guide").innerHTML = s.guide || GENERIC_GUIDE;
+  unsnap(); $("snap").dataset.stop = "";
   $("guide").style.width = s.guideW || "";
   guideOn = true; $("guide").classList.remove("off"); $("guideBtn").textContent = "Hide guide";
   placeGuideTip();
@@ -560,20 +604,17 @@ async function openCamera() {
   lctx.clearRect(0, 0, live.width, live.height);
   follow = true;
   showScreen("cam");
-  if (!s.ref) { setStatus("Fit it in the frame and tap Take photo"); $("manual").textContent = "Take photo"; $("manual").style.display = ""; return; }
-  $("manual").style.display = "none";
+  if (!s.ref) { setStatus("This stop isn't set up yet, so it can't check your photo."); return; }
   await startDetection();
 }
 
 async function startDetection() {
   const s = HUNT.stops[state.i];
-  cvFailed = false;
   setStatus("Loading the guide…");
   try { await loadCv(); await prepareRef(s); }
   catch (e) {
-    cvFailed = true;
-    setStatus("Couldn't load the guide: " + (e?.message || e) + ". Tap Retry, or take the photo yourself.");
-    $("retry").style.display = ""; $("manual").textContent = "Take photo"; $("manual").style.display = "";
+    setStatus("Couldn't load the guide: " + (e?.message || e) + ". Tap Retry. It needs a data connection the first time.");
+    $("retry").style.display = "";
     return;
   }
   setStatus("Looking for it");
@@ -605,14 +646,65 @@ function analyse() {
   const r = detect(HUNT.stops[state.i], proc);
   if (r) {
     stable++; lastFound = r;
-    const m = coverMap();
-    lctx.strokeStyle = "#00c853"; lctx.lineWidth = 4; lctx.lineJoin = "round"; lctx.beginPath();
-    r.quad.forEach((pt, k) => { const x = pt.x / p * m.s + m.ox, y = pt.y / p * m.s + m.oy; k ? lctx.lineTo(x, y) : lctx.moveTo(x, y); });
-    lctx.closePath(); lctx.stroke();
+    snapTo(r.hm, p);
     $("guide").classList.add("off"); $("guideTip").style.opacity = "0";
     setStatus("Hold still…");
     if (stable >= STABLE_FRAMES) capture(true);
-  } else { stable = 0; setStatus("Looking for it"); if (guideOn) { $("guide").classList.remove("off"); $("guideTip").style.opacity = "1"; } }
+  } else { stable = 0; unsnap(); setStatus("Looking for it"); if (guideOn) { $("guide").classList.remove("off"); $("guideTip").style.opacity = "1"; } }
+}
+
+/* ---------- Outline that locks onto the real object ---------- */
+function mul3(A, B) {
+  const C = new Array(9).fill(0);
+  for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) for (let k = 0; k < 3; k++) C[r * 3 + c] += A[r * 3 + k] * B[k * 3 + c];
+  return C;
+}
+function snapTo(hm, p) {
+  const s = HUNT.stops[state.i];
+  if (!s.guide) return;
+  const box = $("snap");
+  if (box.dataset.stop !== String(state.i)) {
+    box.innerHTML = s.guide;
+    const svg = box.querySelector("svg"), vb = svg.viewBox.baseVal;
+    svg.setAttribute("width", vb.width); svg.setAttribute("height", vb.height);
+    box.dataset.stop = String(state.i);
+  }
+  const m = coverMap(), k = m.s / p;
+  const T = mul3([k, 0, m.ox, 0, k, m.oy, 0, 0, 1], hm);           /* reference photo -> screen */
+  box.style.transform = `matrix3d(${T[0]},${T[3]},0,${T[6]},${T[1]},${T[4]},0,${T[7]},0,0,1,0,${T[2]},${T[5]},0,${T[8]})`;
+  box.style.display = "block";
+}
+function unsnap() { $("snap").style.display = "none"; }
+function project(H, x, y) { const w = H[6] * x + H[7] * y + H[8]; return [(H[0] * x + H[1] * y + H[2]) / w, (H[3] * x + H[4] * y + H[5]) / w]; }
+/* Draw the outline into the saved photo, following the object's real position and angle */
+function drawOutline(ctx, H) {
+  const svg = $("snap").querySelector("svg");
+  if (!svg) return false;
+  ctx.lineCap = "round"; ctx.lineJoin = "round";
+  svg.querySelectorAll("rect, circle, ellipse, line, path, polyline").forEach(el => {
+    let len = 0;
+    try { len = el.getTotalLength(); } catch (e) { return; }
+    if (!len) return;
+    const cs = getComputedStyle(el);
+    const stroke = cs.stroke && cs.stroke !== "none" ? cs.stroke : el.getAttribute("stroke");
+    if (!stroke || stroke === "none") return;
+    let alpha = 1;
+    for (let n = el; n && n !== svg; n = n.parentNode) alpha *= parseFloat(n.getAttribute && n.getAttribute("opacity") || "1");
+    const n = Math.max(12, Math.ceil(len / 3)), pts = [];
+    for (let i = 0; i <= n; i++) { const pt = el.getPointAtLength(len * i / n); pts.push(project(H, pt.x, pt.y)); }
+    const a = el.getPointAtLength(0), c0 = project(H, a.x, a.y), c1 = project(H, a.x + 10, a.y);
+    const scale = Math.hypot(c1[0] - c0[0], c1[1] - c0[1]) / 10;
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = Math.max(3, (parseFloat(cs.strokeWidth) || 3) * scale);
+    ctx.beginPath();
+    pts.forEach((q, i) => i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]));
+    if (/^(rect|circle|ellipse)$/i.test(el.tagName)) ctx.closePath();
+    ctx.shadowColor = "rgba(0,0,0,.6)"; ctx.shadowBlur = 4;
+    ctx.stroke();
+  });
+  ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+  return true;
 }
 
 function detect(s, canvas) {
@@ -630,7 +722,7 @@ function detect(s, canvas) {
       const pair = knn.get(k);
       if (pair.size() >= 2) {
         const m1 = pair.get(0), m2 = pair.get(1);
-        if (m1.distance < 0.75 * m2.distance) { const rp = s._kp.get(m1.queryIdx).pt, fp = kp.get(m1.trainIdx).pt; a.push(rp.x, rp.y); b.push(fp.x, fp.y); }
+        if (m1.distance < 0.75 * m2.distance) { const q = m1.queryIdx * 2, fp = kp.get(m1.trainIdx).pt; a.push(s._pts[q], s._pts[q + 1]); b.push(fp.x, fp.y); }
       }
       pair.delete();
     }
@@ -643,10 +735,10 @@ function detect(s, canvas) {
     cv.perspectiveTransform(inM, outM, H);
     const o = outM.data32F, P = (k) => ({ x: o[k * 2], y: o[k * 2 + 1] });
     const quad = [P(0), P(1), P(2), P(3)], center = P(4), edge = P(5);
-    if (!isConvex(quad) || polyArea(quad) < canvas.width * canvas.height * 0.03) return null;
+    if (!isConvex(quad) || polyArea(quad) < canvas.width * canvas.height * 0.01) return null;
     const radius = Math.hypot(edge.x - center.x, edge.y - center.y);
     if (s.color && !colorOk(s.color, center, radius, canvas)) return null;
-    return { quad, center, radius };
+    return { quad, center, radius, hm: Array.from(H.data64F) };
   } finally { mats.forEach(m => { try { m.delete(); } catch (e) {} }); }
 }
 
@@ -674,17 +766,22 @@ function polyArea(q) { let s = 0; for (let k = 0; k < 4; k++) { const a = q[k], 
 
 
 /* ---------- Capture ---------- */
-let foundThisPhoto = false, cvFailed = false;
+let foundThisPhoto = false;
 function capture(found) {
   stopLoop();
   const vw = video.videoWidth, vh = video.videoHeight;
   const out = document.createElement("canvas"); out.width = vw; out.height = vh;
   const o = out.getContext("2d"); o.drawImage(video, 0, 0, vw, vh);
   if (found && lastFound) {
-    const p = PROC_W / vw, r = lastFound.radius / p * 1.35;
-    o.strokeStyle = "#ee352e"; o.lineWidth = Math.max(6, r * .16);
-    o.beginPath(); o.arc(lastFound.center.x / p, lastFound.center.y / p, r, 0, Math.PI * 2); o.stroke();
+    const p = PROC_W / vw;
+    const Hv = mul3([1 / p, 0, 0, 0, 1 / p, 0, 0, 0, 1], lastFound.hm);  /* reference photo -> full camera image */
+    if (!drawOutline(o, Hv)) {
+      const r = lastFound.radius / p * 1.35;
+      o.strokeStyle = "#ee352e"; o.lineWidth = Math.max(6, r * .16);
+      o.beginPath(); o.arc(lastFound.center.x / p, lastFound.center.y / p, r, 0, Math.PI * 2); o.stroke();
+    }
   }
+  unsnap();
   stopCamera();
   foundThisPhoto = found;
   $("shot").src = out.toDataURL("image/jpeg", .9);
@@ -692,7 +789,7 @@ function capture(found) {
   badge.classList.toggle("found", found);
   badge.querySelector("svg").style.display = found ? "" : "none";
   $("badgeText").textContent = found ? "Found it" : "Photo taken";
-  const accepted = found || !HUNT.stops[state.i].ref || cvFailed;
+  const accepted = found;
   $("next").style.display = accepted ? "" : "none";
   recordShot();
   if (accepted) state.found[state.i] = HUNT.stops[state.i].char;
@@ -700,7 +797,6 @@ function capture(found) {
   if (found && navigator.vibrate) navigator.vibrate([60, 40, 60]);
   showScreen("result");
 }
-$("manual").addEventListener("click", () => capture(false));
 $("retake").addEventListener("click", () => {
   state.found[state.i] = undefined;
   state.shots[state.i] = undefined; save();
