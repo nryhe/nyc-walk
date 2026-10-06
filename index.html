@@ -89,7 +89,7 @@
   #navNull { display: flex; flex-direction: column; align-items: center; padding: 6px 10px; border-radius: 8px; background: #000; color: #3CFF7A;
     font: 700 11px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace; }
   #navNull b { font-size: 16px; color: #FF5A4E; font-variant-numeric: tabular-nums; }
-  #navEnd { width: auto; min-height: 48px; padding: 0 22px; }
+  #navEnd, #navHere { width: auto; min-height: 48px; padding: 0 18px; }
   .you.puck { width: 0; height: 0; border-radius: 0; background: none; box-shadow: none; border-left: 13px solid transparent; border-right: 13px solid transparent;
     border-bottom: 30px solid var(--ink); filter: drop-shadow(0 0 0 #fff) drop-shadow(0 2px 4px rgba(0,0,0,.35)); position: relative; }
   .you.puck::after { content: ""; position: absolute; left: -7px; top: 14px; width: 14px; height: 10px; background: transparent; }
@@ -345,6 +345,43 @@
   .gAddr { bottom: calc(var(--safe-b) + 110px); font-size: 20px; font-weight: 700; color: #3CFF7A; text-shadow: 0 0 12px rgba(60,255,122,.7); }
   @media (prefers-reduced-motion: reduce) { .node .ring { animation: none; transform: scale(1.4); } .radar .sweep { animation: none; } .crosshair { animation: none; } .tri line { animation: none; stroke-dashoffset: 0; } }
 
+  /* Counter-hack, part cards and buttons */
+  .hackBtn { display: flex; align-items: center; justify-content: center; min-height: 54px; padding: 0 28px; border: 0; border-radius: 999px; cursor: pointer;
+    background: #3CFF7A; color: #000; font: 700 17px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: .04em; box-shadow: 0 0 0 3px #000, 0 0 26px rgba(60,255,122,.55); }
+  .hackBtn:focus-visible { outline: 3px solid #E8FFE8; outline-offset: 3px; }
+  #fightBack { position: absolute; z-index: 7; left: 50%; transform: translateX(-50%); bottom: calc(var(--safe-b) + 40px); display: none; width: min(80vw, 320px); }
+  #fightBack.on { display: flex; animation: fbIn .4s ease-out; }
+  #hackScreen #ransom { bottom: calc(var(--safe-b) + 116px); }
+  @keyframes fbIn { from { opacity: 0; transform: translate(-50%, 12px) } to { opacity: 1; transform: translate(-50%, 0) } }
+  #gIntro { position: absolute; inset: 0; z-index: 2; display: none; flex-direction: column; justify-content: center; gap: 14px; padding: 0 28px; background: rgba(0,0,0,.92); }
+  #gIntro.on { display: flex; }
+  #giKick { color: #1E9E4A; font-size: 13px; letter-spacing: .1em; margin: 0; }
+  #giTitle { color: #E8FFE8; font-size: 30px; line-height: 36px; margin: 0; }
+  #giText { color: #B8D8C0; font-size: 16px; line-height: 24px; margin: 0 0 12px; }
+  #gProg { color: #3CFF7A; }
+  .node { width: 64px !important; height: 64px !important; margin: -32px 0 0 -32px !important; }
+  .node .core { width: 36px !important; height: 36px !important; margin: -18px 0 0 -18px !important; }
+  .node .ring { width: 36px !important; height: 36px !important; margin: -18px 0 0 -18px !important; }
+  .node .nLabel { top: calc(50% + 26px) !important; }
+  @keyframes ringClose { from { transform: scale(4.2); opacity: .15 } 80% { opacity: 1 } to { transform: scale(1); opacity: 1 } }
+  .blip { width: 72px !important; height: 72px !important; margin: -36px 0 0 -36px !important; }
+  .rSlots { position: absolute; left: 0; right: 0; top: 6%; display: flex; justify-content: center; gap: 8px; }
+  .rSlot { width: 46px; height: 60px; border-radius: 6px; box-shadow: inset 0 0 0 2px rgba(60,255,122,.55); }
+  .rSlots.done .rSlot { box-shadow: inset 0 0 0 2px #3CFF7A, 0 0 16px rgba(60,255,122,.5); }
+  .rTile { position: absolute; width: 46px; height: 60px; margin: -30px 0 0 -23px; border: 0; border-radius: 6px; background: var(--cream); color: var(--ink);
+    font: 700 30px/1 var(--font); cursor: pointer; transform: rotate(var(--rot)); box-shadow: 0 6px 18px rgba(0,0,0,.45); }
+  .rTile.used { cursor: default; z-index: 1; }
+  .rTile.done { box-shadow: 0 0 0 2px #3CFF7A, 0 0 16px rgba(60,255,122,.6); }
+  .rTile.shake { animation: rShake .35s; }
+  @keyframes rShake { 0%,100% { transform: rotate(var(--rot)) } 25% { transform: rotate(var(--rot)) translateX(-7px) } 75% { transform: rotate(var(--rot)) translateX(7px) } }
+  .rTile:focus-visible { outline: 3px solid #3CFF7A; outline-offset: 3px; }
+
+  /* Kit buttons for quieter actions */
+  .btn.ghost { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 2px var(--ink); }
+  .btn.ghostLight { background: transparent; color: var(--cream); box-shadow: inset 0 0 0 2px var(--cream); }
+  .btnRow { display: flex; gap: 8px; }
+  .btnRow .btn { flex: 1; }
+
   /* The rescue */
   #recoverScreen { background: var(--page); }
   .rcInner { justify-content: center; gap: 20px; }
@@ -435,6 +472,7 @@
   <div id="navBar">
     <div class="navMain"><b id="navEta"></b><span>arrival</span><div id="navLeft"></div></div>
     <div id="navNull" style="display:none"><span>NULL</span><b id="navNullT"></b></div>
+    <button class="btn secondary" id="navHere">I'm here</button>
     <button class="btn" id="navEnd">End</button>
   </div>
 </div>
@@ -475,7 +513,7 @@
     <div class="introFoot" style="margin-top:auto;padding-top:40px">
       <p id="startMsg" aria-live="polite"></p>
       <button class="btn" id="startBtn"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span>Allow location and start</span></button>
-      <button class="link center" id="skipLoc" style="display:none;margin-top:-12px">Start without location</button>
+      <button class="btn ghost" id="skipLoc" style="display:none">Start without location</button>
       <p class="fine">Your location draws your route. It stays on your phone.</p>
       <p class="build" id="buildB" style="margin-top:-12px"></p>
       <div class="dots" aria-hidden="true"><span></span><span></span><span class="on"></span></div>
@@ -504,7 +542,7 @@
       <button data-z="1" aria-pressed="true">1×</button><button data-z="2" aria-pressed="false">2×</button><button data-z="3" aria-pressed="false">3×</button>
     </div>
     <div class="pill" aria-live="polite"><span class="dot"></span><span id="status">Line it up with the outline</span></div>
-    <button class="typeLink" id="typeIt">Can't get it? Type the answer</button>
+    <button class="glass chip" id="typeIt">Type the answer</button>
     <button id="shutter" aria-label="Take the photo"><span></span></button>
   </div>
 </section>
@@ -523,7 +561,7 @@
       <p id="answerMsg" aria-live="polite"></p>
     </form>
     <button class="btn" id="next"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span id="nextLabel">Next clue</span></button>
-    <div class="links"><button class="link" id="retake">Retake</button><button class="link" id="share" style="display:none">Share photo</button></div>
+    <div class="btnRow"><button class="btn secondary" id="retake">Retake</button><button class="btn secondary" id="share" style="display:none">Share photo</button></div>
   </div>
 </section>
 
@@ -534,20 +572,21 @@
   <div class="tiles" id="hackTiles" aria-hidden="true"></div>
   <div id="ransom"></div>
   <div id="game" aria-live="polite">
-    <div class="gHead"><span id="gTitle">COUNTER-HACK</span><span id="gProg">NULL ACCESS 100%</span></div>
-    <div class="gBar"><span id="gBarFill"></span></div>
+    <div class="gHead"><span id="gTitle">COUNTER-HACK</span><span id="gProg"></span></div>
     <p id="gHint"></p>
     <div id="gField"></div>
     <div id="gLog"></div>
+    <div id="gIntro"><p id="giKick"></p><h2 id="giTitle"></h2><p id="giText"></p><button class="hackBtn" id="giGo">Start</button></div>
   </div>
+  <button class="hackBtn" id="fightBack">Fight back</button>
 </section>
 
 <section id="recoverScreen" class="screen intro" aria-label="Rescue your gift">
   <div class="inner rcInner">
-    <p class="rcKicker">Signal locked. NULL tracked.</p>
+    <p class="rcKicker">Signal locked. Tracking NULL.</p>
     <div class="tiles" id="rcTiles" aria-label="Your code: 7, 6, 7, 5, T, H"></div>
     <h1 class="introTitle" style="margin:0">Rescue your gift</h1>
-    <p class="rcText">NULL is heading to 531 Fifth Avenue, down Fifth at 44th Street. Get your gift back before the timer runs out.</p>
+    <p class="rcText">NULL is on the run with your gift. Follow their signal on the map and catch them before the timer runs out.</p>
     <div class="rcClock" id="rcClock" aria-label="Time left">30:00</div>
     <button class="btn" id="rcGo"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-8 18-2-8z"/></svg>Start the rescue</button>
   </div>
@@ -563,7 +602,7 @@
     <div class="introFoot">
       <div class="stats endStats" id="endStats"></div>
       <button class="btn light" id="endShare"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>Share your hunt</button>
-      <button class="link center" id="endMap" style="color:var(--cream);margin-top:-12px">See your whole route</button>
+      <button class="btn ghostLight" id="endMap">See your whole route</button>
     </div>
   </div>
 </section>
@@ -572,7 +611,7 @@
   <h2 id="pgTitle" tabindex="-1">Your code so far</h2>
   <div class="tiles" id="progTiles"></div>
   <div id="progList"></div>
-  <div class="stack"><button class="btn" id="pgClose">Back to the clue</button><button class="link quiet" id="pgRestart">Start over</button></div>
+  <div class="stack"><button class="btn" id="pgClose">Back to the clue</button><button class="btn ghost" id="pgRestart">Start over</button></div>
   <p class="build" id="buildA"></p>
 </dialog>
 
@@ -582,7 +621,7 @@
   <div class="stack">
     <button class="btn" id="cardShare"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>Share</button>
     <button class="btn secondary" id="cardSave">Save image</button>
-    <button class="link quiet" id="cardClose">Close</button>
+    <button class="btn ghost" id="cardClose">Close</button>
   </div>
 </dialog>
 
@@ -765,7 +804,7 @@ function setMini(on) {
 function showCenter() {
   const sheetH = navOn ? $("navBar").offsetHeight + 12 : $("sheet").classList.contains("on") ? $("sheetIn").offsetHeight : 0;
   $("center").style.bottom = `calc(${sheetH + 12}px)`;
-  $("center").classList.toggle("on", !!lastPos && !follow && !$("map").classList.contains("mini"));
+  $("center").classList.toggle("on", !!lastPos && !follow && !$("map").classList.contains("mini") && !document.querySelector(".screen.on"));
 }
 $("center").addEventListener("click", () => { follow = true; if (navOn) { navUpdate(true); showCenter(); return; } if (lastPos && map) map.easeTo({ center: [lastPos.lng, lastPos.lat], zoom: Math.max(map.getZoom(), 16) }); showCenter(); });
 
@@ -962,19 +1001,8 @@ function render(popIndex) {
   if (state.i >= HUNT.stops.length) {
     if (!state.finishedAt) { state.finishedAt = Date.now(); save(); }
     sh.classList.remove("collapsed");
-    const dirHTML = `
-        <div class="dirBox" id="dirBox">
-          <p id="dirSum">Finding a walking route…</p>
-          <ol id="dirSteps" class="dirSteps"></ol>
-          <button class="link center" id="dirToggle" style="margin-top:-8px">Show the steps</button>
-          <button class="btn" id="navGo"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-8 18-2-8z"/></svg>Start directions</button>
-          <a class="link center" id="mapsLink" target="_blank" rel="noopener" style="margin-top:-8px">Open in Apple or Google Maps instead</a>
-        </div>`;
-    const wireDir = () => {
-      $("mapsLink").href = mapsUrl();
-      $("navGo").onclick = () => { if (dirData) navStart(); else showDirections(true).then(navStart); };
-      $("dirToggle").onclick = () => { const o = $("dirBox").classList.toggle("open"); $("dirToggle").textContent = o ? "Hide the steps" : "Show the steps"; };
-    };
+    const goBtn = `<button class="btn" id="navGo"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-8 18-2-8z"/></svg>Start directions</button>`;
+    const wireGo = () => { $("navGo").onclick = () => { if (dirData) navStart(); else showDirections(true).then(navStart); }; };
     const tiles = (arr) => arr.map(c => `<div class="slot filled">${esc(c)}</div>`).join("");
 
     /* The very end: at the gift */
@@ -988,8 +1016,8 @@ function render(popIndex) {
           <h1 class="finQ">Happy birthday, Kes!</h1>
           <div class="stats">${$("endStats").innerHTML}</div>
           <button class="btn" id="endShare2"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>Share your hunt</button>
-          <button class="link center" id="endBack">Back to the celebration</button>
-          <button class="link quiet" id="restartBtn">Start over</button>
+          <button class="btn secondary" id="endBack">Back to the celebration</button>
+          <button class="btn ghost" id="restartBtn">Start over</button>
         </div>`;
       $("endBack").onclick = () => { endOnMap = false; render(); };
       $("endShare2").onclick = openShareCard;
@@ -997,21 +1025,17 @@ function render(popIndex) {
       showScreen(null); fitAll(); return;
     }
 
-    /* Hacked: the rescue */
+    /* Hacked: the chase */
     if (state.hackedAt && !state.twistedAt) beginRescue();
     if (state.twistedAt) {
       if (!state.rescueStarted) { showRecover(true); return; }
       sh.innerHTML = `
         <div class="body fin">
-          <h1 class="finQ">Rescue your gift</h1>
-          <p class="sub">NULL is on Fifth Avenue, about five minutes ahead of you. Follow them to 531 Fifth.</p>
-          ${dirHTML}
-          <button class="btn secondary" id="hereBtn">I'm here</button>
-          <button class="link quiet" id="restartBtn">Start over</button>
+          <h1 class="finQ">Catch NULL</h1>
+          <p class="sub">NULL is on the run with your gift. Follow their signal on the map.</p>
+          ${goBtn}
         </div>`;
-      wireDir();
-      $("hereBtn").onclick = () => { state.doneAt = Date.now(); save(); render(); };
-      $("restartBtn").onclick = askStartOver;
+      wireGo();
       showScreen(null); showDirections(); updateRescueClock(); return;
     }
 
@@ -1024,33 +1048,20 @@ function render(popIndex) {
           <p class="sub">Take one last photo to finish the hunt.</p>
           <button class="btn" id="finalCam"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg>Take the final photo</button>
           <p class="msg" id="finalMsg" aria-live="polite"></p>
-          <button class="link quiet" id="restartBtn">Start over</button>
         </div>`;
       $("finalCam").onclick = openFinalCamera;
-      $("restartBtn").onclick = askStartOver;
       showScreen(null); showDirections(); return;
     }
 
     /* The question, with the way there */
     sh.innerHTML = `
-      <div class="grab" aria-hidden="true"><span></span></div>
       <div class="body fin">
         <div class="tiles finTiles" aria-label="${esc(codeLabel().replace(" so far", ""))}">${boardHTML()}</div>
         <h1 class="finQ">${esc(HUNT.finalText)}</h1>
         <div class="stats"><div><b>${fmt(elapsed())}</b><span>Time</span></div><div><b>${totalMiles().toFixed(1)} mi</b><span>Walked</span></div></div>
-        <p class="hint" id="nudgeText" style="text-align:left"></p>
-        <button class="link center" id="nudgeBtn">I need a nudge</button>
-        ${dirHTML}
-        <button class="btn secondary" id="hereBtn">I'm here</button>
-        <button class="link quiet" id="restartBtn">Start over</button>
+        ${goBtn}
       </div>`;
-    $("nudgeBtn").onclick = () => {
-      if (nudgeIx < HUNT.nudges.length) { const n = $("nudgeText"); n.textContent = HUNT.nudges.slice(0, ++nudgeIx).join(" "); n.style.display = "block"; }
-      if (nudgeIx >= HUNT.nudges.length) $("nudgeBtn").style.display = "none";
-    };
-    $("hereBtn").onclick = () => { nearNow = true; render(); };
-    $("restartBtn").onclick = askStartOver;
-    wireDir();
+    wireGo();
     showScreen(null);
     showDirections();
     return;
@@ -1064,7 +1075,7 @@ function render(popIndex) {
       <p class="clue">${esc(s.clue)}</p>
       <p class="hint" id="hintText">${esc(s.hint)}</p>
       <button class="btn" id="openCam"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg>Camera</button>
-      <button class="link center" id="hintBtn" style="margin-top:-8px">Show a hint</button>
+      <button class="btn secondary" id="hintBtn">Show a hint</button>
       <p class="msg" id="msg1" aria-live="polite"></p>
     </div>`;
   sh.classList.toggle("collapsed", collapsed);
@@ -1077,7 +1088,7 @@ function render(popIndex) {
 }
 
 /* ---------- The shareable end image ---------- */
-const BUILD = "Oct 5, build 16";
+const BUILD = "Oct 6, build 17";
 const PLACES = [
   { name: "Bryant Park", ll: [40.75337, -73.98123] },
   { name: "East 67th Street", ll: [40.76840, -73.97060] },
@@ -1356,6 +1367,12 @@ function navStop() {
   drawDir(); fitDir();
 }
 $("navEnd").addEventListener("click", () => { navStop(); render(); });
+$("navHere").addEventListener("click", () => {
+  navStop();
+  if (state.twistedAt) { state.doneAt = Date.now(); save(); }
+  else nearNow = true;
+  render();
+});
 async function navUpdate(first) {
   if (!navOn || !dirData) return;
   const C = dirData.coords;
@@ -1386,7 +1403,9 @@ async function navUpdate(first) {
   if (dirData.straight || !next) {
     $("navIco").innerHTML = left < 25 ? NAV_ICONS.arrive : NAV_ICONS.straight;
     $("navDist").textContent = navDist(left);
-    $("navText").textContent = left < 25 ? `Arrive at ${dest().name}` : `Head ${compass(bearingOf(here, [dest().lng, dest().lat]))} toward ${dest().name}`;
+    $("navText").textContent = state.twistedAt
+      ? (left < 25 ? "Catch NULL" : `Follow NULL's signal ${compass(bearingOf(here, [dest().lng, dest().lat]))}`)
+      : (left < 25 ? `Arrive at ${dest().name}` : `Head ${compass(bearingOf(here, [dest().lng, dest().lat]))} toward ${dest().name}`);
   } else {
     $("navIco").innerHTML = navIcon(next);
     $("navDist").textContent = navDist(next.along - along);
@@ -1441,7 +1460,7 @@ function stepText(st) {
   const mod = (m.modifier || "").replace("uturn", "around");
   switch (m.type) {
     case "depart": return `Head ${compass(m.bearing_after || 0)}${name ? ` on ${name}` : ""}`;
-    case "arrive": return `Arrive at ${dest().name}`;
+    case "arrive": return state.twistedAt ? "Catch NULL" : `Arrive at ${dest().name}`;
     case "turn": case "end of road": case "fork": case "on ramp": case "off ramp":
       return mod === "straight" ? `Continue${onto}` : `Turn ${mod}${onto}`;
     case "roundabout": case "rotary": return `Go around the circle${onto ? ` and exit${onto}` : ""}`;
@@ -1499,7 +1518,8 @@ function drawDir() {
   if (mapReady && !navOn) map.getSource("dirDone").setData(asLine([]));
   const on = !!(dirData && state.finishedAt);
   if (mapReady) map.getSource("dir").setData(on ? asLine(dirData.coords) : asLine([]));
-  if (on && !destMarker) {
+  if (on && state.twistedAt && destMarker) { destMarker.remove(); destMarker = null; }
+  if (on && !destMarker && !state.twistedAt) {
     const el = document.createElement("div"); el.className = "dest"; el.textContent = dest().short;
     destMarker = new maplibregl.Marker({ element: el, anchor: "bottom", offset: [0, -6] }).setLngLat([dest().lng, dest().lat]).addTo(map);
   } else if (!on && destMarker) { destMarker.remove(); destMarker = null; }
@@ -1793,7 +1813,7 @@ async function runHack(photo) {
   cv.width = W * dpr; cv.height = H * dpr;
   $("term").querySelectorAll("div").forEach(d => d.remove());
   $("ransom").textContent = ""; $("ransom").classList.remove("on");
-  $("hackTiles").classList.remove("on");
+  $("hackTiles").classList.remove("on"); $("fightBack").classList.remove("on");
   scr.className = "screen";
   showScreen("hackScreen");
   const buzz = (p) => { if (navigator.vibrate) navigator.vibrate(p); };
@@ -1801,61 +1821,71 @@ async function runHack(photo) {
   /* 1. the calm before */
   drawCover(ctx, photo, cv.width, cv.height);
   scr.classList.add("flash", "saved");
-  await sleep(1100);
+  await sleep(1700);
   scr.classList.remove("flash", "saved");
+  await sleep(500);
 
   /* 2. the crash: stutter, tear, black */
-  for (let k = 0; k < 7; k++) {
+  for (let k = 0; k < 14; k++) {
     const y = Math.random() * cv.height, h = 20 + Math.random() * 200;
     ctx.drawImage(cv, 0, y, cv.width, h, (Math.random() - .5) * 90, y, cv.width, h);
-    if (k % 3 === 0) { ctx.fillStyle = "rgba(0,0,0,.5)"; ctx.fillRect(0, 0, cv.width, cv.height); }
-    await sleep(90);
+    if (k % 4 === 0) { ctx.fillStyle = "rgba(0,0,0,.45)"; ctx.fillRect(0, 0, cv.width, cv.height); }
+    await sleep(k < 6 ? 160 : 90);
   }
-  buzz(120);
+  buzz(160);
   ctx.fillStyle = "#000"; ctx.fillRect(0, 0, cv.width, cv.height);
   scr.classList.add("term");
-  await sleep(1400);
+  await sleep(2400);
 
-  /* 3. the terminal */
+  /* 3. the terminal: slower, with holds on the moments that matter */
   termLine("kes_hunt.app  fatal exception 0x00000767", "err");
-  await sleep(300);
-  await slowType("> BREACH DETECTED", "err", 35);
+  await sleep(900);
+  await slowType("> BREACH DETECTED", "err", 70);
   buzz([40, 30, 40]);
+  await sleep(1400);
   for (const [a, b] of [["> connecting to kes.phone", "OK"], ["> bypassing birthday_firewall", "OK"], ["> escalating privileges", "root"], ["> disabling fun.exe", "OK"]]) {
-    const d = termLine(a + " "); for (let k = 0; k < 10; k++) { d.textContent += "."; await sleep(22); } d.textContent += " " + b; await sleep(60);
+    const d = termLine(a + " "); for (let k = 0; k < 10; k++) { d.textContent += "."; await sleep(55); } d.textContent += " " + b; await sleep(380);
   }
-  await hexBurst(14, 18);
+  await hexBurst(12, 60);
+  await sleep(400);
   termLine("> reading hunt.log", "white");
+  await sleep(800);
   for (let k = 0; k < HUNT.stops.length; k++) {
     const sh = shotFor(k), when = sh ? new Date(sh.t).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "--:--";
     const ll = sh ? `${sh.lat.toFixed(4)},${sh.lng.toFixed(4)}` : "??.????,??.????";
     termLine(` [${when}] ${ll} ${STOP_IDS[k].padEnd(14)} ${HUNT.stops[k].char} ✓`);
-    await sleep(110);
+    await sleep(520);
   }
   termLine(`> distance walked: ${totalMiles().toFixed(1)} mi    time: ${fmt(elapsed())}`);
-  await hexBurst(10, 15);
+  await sleep(1300);
+  await hexBurst(10, 50);
   const noise = ["> rerouting 14 satellites ... OK", "> compiling villain_monologue.c ... OK", "> warming up evil laugh ... ha", "> spoofing GPS ... nah, don't need to",
     "> checking snack inventory ... low", "> cracking wrapping_paper.zip ... OK"];
-  for (const n of noise.slice(0, 3)) { termLine(n); await sleep(140); }
+  for (const n of noise.slice(0, 3)) { termLine(n); await sleep(550); }
   const dec = termLine("> decrypting code ......... ");
-  for (const ch of ["7", " 6", " 7", " 5", " T", " H"]) { dec.textContent += ch; await sleep(130); }
+  await sleep(500);
+  for (const ch of ["7", " 6", " 7", " 5", " T", " H"]) { dec.textContent += ch; await sleep(330); }
+  await sleep(900);
   termLine("> resolving 767 5TH ... 767 FIFTH AVE, NY");
-  await sleep(250);
-  await slowType("> locating payload: birthday_gift.pkg", "white", 18);
-  await sleep(350);
+  await sleep(1300);
+  await slowType("> locating payload: birthday_gift.pkg", "white", 45);
+  await sleep(1500);
   termLine("  FOUND @ 767 FIFTH AVE", "err");
   buzz([60, 40, 60]);
-  await sleep(300);
-  await bar("> initiating transfer", 45);
-  for (const n of noise.slice(3)) { termLine(n); await sleep(120); }
-  await hexBurst(18, 12);
+  await sleep(2000);
+  await bar("> initiating transfer", 150);
+  await sleep(600);
+  for (const n of noise.slice(3)) { termLine(n); await sleep(500); }
+  await hexBurst(14, 45);
   termLine("> payload relocated ......... ██████████", "white");
+  await sleep(700);
   termLine("> encrypting new location ... done");
-  await sleep(200);
+  await sleep(1200);
   termLine("> deleting evidence", "err");
-  for (let k = 0; k < 16; k++) { termLine(`  rm -rf /hunt/${["fun", "joy", "clues", "tiles", "map", "you"][k % 6]}_${(Math.random() * 9999 | 0)} ... ok`, "dim"); await sleep(28); }
+  await sleep(500);
+  for (let k = 0; k < 14; k++) { termLine(`  rm -rf /hunt/${["fun", "joy", "clues", "tiles", "map", "you"][k % 6]}_${(Math.random() * 9999 | 0)} ... ok`, "dim"); await sleep(110); }
   buzz([30, 30, 30, 30, 200]);
-  await sleep(300);
+  await sleep(1500);
 
   /* 4. the corruption */
   scr.classList.remove("term");
@@ -1864,29 +1894,35 @@ async function runHack(photo) {
   const tiles = $("hackTiles"), from = HUNT.twist.from, junk = "#%&?!@$*01ABCDEFGHJKLMNPRSTUVWXYZ";
   tiles.innerHTML = from.map(c => `<div class="slot filled">${c}</div>`).join("");
   tiles.classList.add("on");
-  const t0 = performance.now();
-  while (performance.now() - t0 < 4200) {
-    const power = Math.min(1, (performance.now() - t0) / 4200);
+  await sleep(900);
+  const t0 = performance.now(), DUR = 6000;
+  while (performance.now() - t0 < DUR) {
+    const power = Math.min(1, (performance.now() - t0) / DUR);
     if (!REDUCED) corruptStep(cv, ctx, power);
     [...tiles.children].forEach((el, k) => el.textContent = Math.random() < .3 + power * .5 ? junk[Math.random() * junk.length | 0] : from[k]);
     if (Math.random() < .08) buzz(25);
-    await sleep(60);
+    await sleep(70);
   }
   if (REDUCED) for (let k = 0; k < 30; k++) corruptStep(cv, ctx, .8);
   [...tiles.children].forEach(el => el.textContent = "?");
+  await sleep(1000);
 
-  /* 5. the ransom note */
+  /* 5. the ransom note, then Kes decides when to fight back */
   const note = ["Hi Kes. Nice photo.", "", "I've taken your birthday gift. Good luck finding it.", "",
     "In 30:00 I wrap it in so much bubble wrap you'll never get it open.", "", "Happy birthday,", "NULL"];
   const box = $("ransom"); box.classList.add("on");
   for (const line of note) {
-    for (const ch of line) { box.textContent += ch; await sleep(REDUCED ? 8 : 26); }
-    box.textContent += "\n"; await sleep(line ? 260 : 120);
+    for (const ch of line) { box.textContent += ch; await sleep(REDUCED ? 10 : 48); }
+    box.textContent += "\n"; await sleep(line ? 700 : 250);
   }
-  await sleep(1800);
+  await sleep(1500);
+  $("fightBack").classList.add("on");
+  $("fightBack").focus({ preventScroll: true });
+  await new Promise(r => { $("fightBack").onclick = r; });
+  $("fightBack").classList.remove("on");
   box.classList.remove("on"); $("hackTiles").classList.remove("on");
 
-  /* 6. counter-hack: three timed taps, then lock onto NULL */
+  /* 6. counter-hack */
   await counterHack();
 
   /* 7. recovery */
@@ -1895,7 +1931,7 @@ async function runHack(photo) {
   showRecover(false);
 }
 
-/* ---------- Counter-hack: unfailable timed taps, then lock onto NULL ---------- */
+/* ---------- Counter-hack: seal the ports, restore the code, trace NULL ---------- */
 function gLog(text, cls) {
   const l = $("gLog"), d = document.createElement("div");
   if (cls) d.className = cls; d.textContent = text; l.appendChild(d);
@@ -1907,44 +1943,90 @@ function gFloat(x, y, text, cls) {
   f.style.left = x + "px"; f.style.top = y + "px";
   $("gField").appendChild(f); setTimeout(() => f.remove(), 900);
 }
-function setAccess(pct) {
-  $("gBarFill").style.width = pct + "%";
-  $("gProg").textContent = `NULL ACCESS ${pct}%`;
+/* A card that explains the next part and waits for Start */
+function gIntro(part, title, text, label) {
+  return new Promise(resolve => {
+    $("giKick").textContent = part; $("giTitle").textContent = title; $("giText").textContent = text; $("giGo").textContent = label || "Start";
+    $("gIntro").classList.add("on");
+    $("giGo").onclick = () => { $("gIntro").classList.remove("on"); resolve(); };
+    setTimeout(() => $("giGo").focus({ preventScroll: true }), 60);
+  });
 }
-const RING_MS = 1700;
-function nodeRound(fx, fy, label) {
+const fieldPoint = (ev) => { const fr = $("gField").getBoundingClientRect(); return [ev.clientX - fr.left, ev.clientY - fr.top]; };
+
+/* Part 1: a small node; only a tap on it, once the ring has nearly closed, seals it. Untapped rings just loop. */
+function nodeRound(fx, fy, label, ringMs) {
   return new Promise(resolve => {
     const field = $("gField"), r = field.getBoundingClientRect();
     const x = r.width * fx, y = r.height * fy;
     const n = document.createElement("button");
-    n.className = "node"; n.setAttribute("aria-label", `Block ${label}`);
+    n.className = "node"; n.setAttribute("aria-label", `Seal ${label}`);
     n.style.left = x + "px"; n.style.top = y + "px";
-    n.innerHTML = `<span class="ring"></span><span class="core"></span><span class="nLabel">${label}</span>`;
+    n.innerHTML = `<span class="ring" style="animation-duration:${ringMs}ms"></span><span class="core"></span><span class="nLabel">${label}</span>`;
     field.appendChild(n);
-    const start = performance.now();
     let done = false;
-    const hit = (ev) => {
+    n.addEventListener("click", (ev) => {
+      ev.stopPropagation();
       if (done) return;
-      ev.stopPropagation(); done = true;
-      /* how far the ring on screen has closed: 0 = wide open, 1 = on the node */
-      const anim = n.querySelector(".ring").getAnimations ? n.querySelector(".ring").getAnimations()[0] : null;
-      const ms = anim && anim.currentTime != null ? anim.currentTime : performance.now() - start;
-      const phase = (ms % RING_MS) / RING_MS;
-      const perfect = REDUCED || phase > .72;
+      const a = n.querySelector(".ring").getAnimations ? n.querySelector(".ring").getAnimations()[0] : null;
+      const phase = REDUCED || !a || a.currentTime == null ? 1 : (a.currentTime % ringMs) / ringMs;
+      if (phase < .8) { gFloat(x, y - 46, "TOO EARLY", "dim"); if (navigator.vibrate) navigator.vibrate(15); return; }
+      done = true;
+      const perfect = phase > .93;
       n.classList.add("burst");
-      gFloat(x, y - 60, perfect ? "PERFECT" : "BLOCKED", perfect ? "good" : "");
+      gFloat(x, y - 46, perfect ? "PERFECT" : "SEALED", "good");
       if (navigator.vibrate) navigator.vibrate(perfect ? [30, 30, 60] : 50);
       setTimeout(() => { n.remove(); field.onclick = null; resolve(); }, 450);
-    };
-    n.addEventListener("click", hit);
-    field.onclick = (ev) => {             /* a tap that misses the node: a nudge, never a penalty */
-      if (done) return;
-      const fr = field.getBoundingClientRect();
-      gFloat(ev.clientX - fr.left, ev.clientY - fr.top - 30, "closer", "dim");
-    };
+    });
+    field.onclick = (ev) => { if (!done) { const [px, py] = fieldPoint(ev); gFloat(px, py - 30, "MISSED", "dim"); } };
     setTimeout(() => n.focus({ preventScroll: true }), 50);
   });
 }
+
+/* Part 2: rebuild 767 5TH from scrambled tiles. A wrong tile shakes; nothing is lost. */
+function restoreCode() {
+  return new Promise(resolve => {
+    const field = $("gField"), r = field.getBoundingClientRect(), code = HUNT.twist.from;
+    const slots = document.createElement("div"); slots.className = "rSlots";
+    slots.innerHTML = code.map(() => `<span class="rSlot"></span>`).join("");
+    field.appendChild(slots);
+    /* scatter the tiles in a loose grid, shuffled, slightly rotated */
+    const cells = [[.2, .42], [.5, .4], [.8, .44], [.22, .66], [.52, .7], [.8, .64]].sort(() => Math.random() - .5);
+    const order = code.map((c, k) => ({ c, k })).sort(() => Math.random() - .5);
+    let idx = 0;
+    order.forEach((o, n) => {
+      const b = document.createElement("button");
+      b.className = "rTile"; b.textContent = o.c; b.setAttribute("aria-label", `Tile ${o.c}`);
+      b.style.left = r.width * cells[n][0] + "px"; b.style.top = r.height * cells[n][1] + "px";
+      b.style.setProperty("--rot", ((Math.random() - .5) * 24).toFixed(1) + "deg");
+      b.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        if (b.classList.contains("used")) return;
+        if (o.c !== code[idx]) {
+          b.classList.remove("shake"); void b.offsetWidth; b.classList.add("shake");
+          const [px, py] = fieldPoint(ev); gFloat(px, py - 40, "NOT YET", "dim");
+          if (navigator.vibrate) navigator.vibrate(20);
+          return;
+        }
+        /* fly into its slot */
+        const slot = slots.children[idx], sr = slot.getBoundingClientRect(), br = b.getBoundingClientRect();
+        b.classList.add("used");
+        b.style.transition = REDUCED ? "none" : "left .35s cubic-bezier(.2,.8,.2,1), top .35s cubic-bezier(.2,.8,.2,1), transform .35s";
+        const fr = field.getBoundingClientRect();
+        b.style.left = (sr.left - fr.left + sr.width / 2) + "px"; b.style.top = (sr.top - fr.top + sr.height / 2) + "px";
+        b.style.setProperty("--rot", "0deg");
+        idx++;
+        gLog(`> block ${idx}/6 restored`);
+        if (navigator.vibrate) navigator.vibrate(30);
+        if (idx === code.length) setTimeout(() => { slots.classList.add("done"); field.querySelectorAll(".rTile").forEach(t => t.classList.add("done")); resolve(); }, 400);
+      });
+      field.appendChild(b);
+    });
+    field.onclick = null;
+  });
+}
+
+/* Part 3: tap NULL's signal on the radar. Misses slow it down; after three, any tap locks on. */
 function lockOn() {
   return new Promise(resolve => {
     const field = $("gField"), r = field.getBoundingClientRect();
@@ -1958,11 +2040,11 @@ function lockOn() {
     blip.className = "blip"; blip.setAttribute("aria-label", "NULL's signal. Tap to lock on");
     blip.innerHTML = `<span class="bDot"></span><span class="bTag">NULL</span>`;
     field.appendChild(blip);
-    let speed = REDUCED ? 0 : 1, misses = 0, t = 0, last = performance.now(), raf = 0, done = false, bx = cx, by = cy;
+    let speed = REDUCED ? 0 : 1.6, misses = 0, t = 0, last = performance.now(), raf = 0, done = false, bx = cx, by = cy;
     const move = (now) => {
       t += (now - last) / 1000 * speed; last = now;
-      bx = cx + Math.sin(t * 1.3) * R * .55 + Math.sin(t * 2.9) * R * .12;
-      by = cy + Math.sin(t * 1.7 + 1) * R * .5;
+      bx = cx + Math.sin(t * 1.3) * R * .6 + Math.sin(t * 2.9) * R * .14;
+      by = cy + Math.sin(t * 1.7 + 1) * R * .55;
       blip.style.left = bx + "px"; blip.style.top = by + "px";
       if (!done) raf = requestAnimationFrame(move);
     };
@@ -1975,71 +2057,67 @@ function lockOn() {
       ch.style.left = bx + "px"; ch.style.top = by + "px";
       ch.innerHTML = `<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M8 30V8h22M70 8h22v22M92 70v22H70M30 92H8V70"/></svg>`;
       field.appendChild(ch);
-      /* triangulation lines from three edges of the radar */
-      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      svg.setAttribute("class", "tri"); svg.setAttribute("width", r.width); svg.setAttribute("height", r.height);
-      [[cx - R, cy + R * .2], [cx + R * .8, cy - R * .6], [cx + R * .3, cy + R * .95]].forEach(([x1, y1], k) => {
-        const l = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        l.setAttribute("x1", x1); l.setAttribute("y1", y1); l.setAttribute("x2", bx); l.setAttribute("y2", by);
-        l.style.animationDelay = (.35 + k * .2) + "s"; svg.appendChild(l);
-      });
-      field.appendChild(svg);
       if (navigator.vibrate) navigator.vibrate([80, 50, 80, 50, 200]);
       resolve();
     };
     blip.addEventListener("click", (ev) => { ev.stopPropagation(); lock(); });
     field.onclick = (ev) => {
       if (done) return;
-      if (misses >= 2) { lock(); return; }               /* after two misses, any tap locks on */
-      misses++; speed *= .45;
-      const fr = field.getBoundingClientRect();
-      gFloat(ev.clientX - fr.left, ev.clientY - fr.top - 30, misses === 2 ? "tap anywhere" : "closer", "dim");
-      $("gHint").textContent = misses === 2 ? "Signal weakening. Tap anywhere to lock on." : "Almost. NULL is slowing down.";
+      if (misses >= 3) { lock(); return; }
+      misses++; speed *= .55;
+      const [px, py] = fieldPoint(ev);
+      gFloat(px, py - 30, misses === 3 ? "TAP ANYWHERE" : "MISSED", "dim");
+      $("gHint").textContent = misses === 3 ? "Signal weakening. Tap anywhere to lock on." : "Missed. NULL is slowing down.";
     };
     setTimeout(() => blip.focus({ preventScroll: true }), 50);
   });
 }
+
 async function counterHack() {
   const g = $("game");
-  $("gField").innerHTML = ""; $("gLog").innerHTML = "";
-  $("gTitle").textContent = "COUNTER-HACK";
-  $("gHint").textContent = "Tap each node as the ring closes on it.";
-  setAccess(100);
+  $("gField").innerHTML = ""; $("gLog").innerHTML = ""; $("gHint").textContent = "";
+  $("gTitle").textContent = "COUNTER-HACK"; $("gProg").textContent = "";
   g.classList.add("on");
   gLog("> hunt.app security online", "white");
-  await sleep(700);
-  const rounds = [[.28, .3, "PORT 7"], [.7, .52, "PORT 6"], [.38, .72, "PORT 5"]];
-  const access = [66, 33, 0];
-  const lines = ["> port 7 sealed", "> port 6 sealed", "> port 5 sealed. NULL locked out"];
-  const nullSays = ["NULL: hey. stop that.", "NULL: okay that one hurt.", "NULL: fine. I'm leaving anyway."];
-  for (let k = 0; k < rounds.length; k++) {
-    await nodeRound(...rounds[k]);
-    setAccess(access[k]);
-    gLog(lines[k]); gLog(nullSays[k], "err");
-    await sleep(450);
+
+  /* Part 1 */
+  await gIntro("PART 1 OF 3", "Seal the ports", "NULL is still inside your phone through five open ports. Tap each port the moment the ring closes on it. Too early and it won't seal.");
+  $("gTitle").textContent = "SEAL THE PORTS"; $("gProg").textContent = "0 / 5";
+  $("gHint").textContent = "Tap the port when the ring closes on it.";
+  const ports = [[.26, .26, "PORT 22", 2300], [.72, .4, "PORT 80", 2000], [.34, .64, "PORT 443", 1800], [.74, .74, "PORT 8080", 1600], [.5, .46, "PORT 767", 1400]];
+  const nullSays = ["NULL: hey. stop that.", "NULL: that was a lucky one.", "NULL: okay that one hurt.", "NULL: I have backups, you know.", "NULL: fine. FINE."];
+  for (let k = 0; k < ports.length; k++) {
+    await nodeRound(...ports[k]);
+    $("gProg").textContent = `${k + 1} / 5`;
+    gLog(`> ${ports[k][2].toLowerCase()} sealed`); gLog(nullSays[k], "err");
+    await sleep(1100);
   }
-  /* lock on */
+  gLog("> NULL locked out", "white");
+  await sleep(900);
+
+  /* Part 2 */
+  $("gField").innerHTML = "";
+  await gIntro("PART 2 OF 3", "Restore your code", "On the way out, NULL scrambled your code. Tap the tiles in the right order to rebuild it.");
+  $("gTitle").textContent = "RESTORE THE CODE"; $("gProg").textContent = "";
+  $("gHint").textContent = "Tap the tiles in order.";
+  await restoreCode();
+  $("gHint").textContent = "Code restored: 767 5TH";
+  gLog("> code restored", "white"); gLog("NULL: how do you even know that", "err");
+  if (navigator.vibrate) navigator.vibrate([40, 30, 80]);
+  await sleep(1800);
+
+  /* Part 3 */
+  $("gField").innerHTML = "";
+  await gIntro("PART 3 OF 3", "Trace NULL", "NULL is escaping with your gift. Tap their signal on the radar to lock on and follow them.");
   $("gTitle").textContent = "TRACE NULL";
-  $("gHint").textContent = "NULL is escaping. Tap their signal to lock on.";
-  gLog("> NULL disconnecting...", "err");
-  await sleep(500);
+  $("gHint").textContent = "Tap NULL's signal.";
   await lockOn();
-  $("gTitle").textContent = "TARGET LOCKED";
-  $("gHint").textContent = "";
-  gLog("> triangulating", "white");
-  const coord = document.createElement("div"); coord.className = "gCoord"; $("game").appendChild(coord);
-  const real = "40.7548° N  73.9797° W", junk = "0123456789";
-  for (let k = 0; k < 18; k++) {
-    coord.textContent = [...real].map((c, i) => /\d/.test(c) && i >= k ? junk[Math.random() * 10 | 0] : c).join("");
-    await sleep(70);
-  }
-  coord.textContent = real;
-  await sleep(500);
-  const addr = document.createElement("div"); addr.className = "gAddr"; addr.textContent = "531 FIFTH AVE @ 44TH ST"; $("game").appendChild(addr);
-  gLog("> NULL located", "white");
-  if (navigator.vibrate) navigator.vibrate([60, 40, 120]);
-  await sleep(2200);
-  coord.remove(); addr.remove();
+  $("gTitle").textContent = "SIGNAL LOCKED";
+  $("gHint").textContent = "Tracking NULL";
+  gLog("> signal locked", "white"); gLog("> tracking NULL", "white");
+  const dots = setInterval(() => { const h = $("gHint"); h.textContent = h.textContent.length > 15 ? "Tracking NULL" : h.textContent + "."; }, 350);
+  await sleep(2600);
+  clearInterval(dots);
   g.classList.remove("on");
 }
 
@@ -2506,7 +2584,7 @@ function capture(found) {
   recordShot();
   if (accepted) { state.found[state.i] = HUNT.stops[state.i].char; (state.foundAt = state.foundAt || [])[state.i] = Date.now(); }
   save();
-  const card = $("resCard"), later = [$("next"), document.querySelector("#resCard .links")];
+  const card = $("resCard"), later = [$("next"), document.querySelector("#resCard .btnRow")];
   if (found) {
     $("resTiles").innerHTML = boardHTML(-1, -1, state.i);   /* the new tile starts empty */
     later.forEach(el => el.classList.add("wait"));
