@@ -71,6 +71,30 @@
     display: none; align-items: center; justify-content: center; padding: 0; box-shadow: 0 2px 10px rgba(46,54,66,.18); cursor: pointer; }
   #center.on { display: flex; }
 
+  /* Navigation */
+  #navUI { display: none; }
+  #navUI.on { display: block; }
+  #navBanner { position: fixed; z-index: 21; left: 10px; right: 10px; top: calc(var(--safe-t) + 10px); max-width: 560px; margin: 0 auto;
+    display: flex; align-items: center; gap: 16px; padding: 16px 18px; border-radius: 18px; background: var(--ink); color: var(--cream); box-shadow: 0 6px 20px rgba(31,37,46,.3); }
+  #navIco { width: 44px; height: 44px; flex: none; }
+  #navDist { font-size: 30px; line-height: 34px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  #navDist:empty { display: none; }
+  #navText { font-size: 18px; line-height: 24px; color: #fff; }
+  #navBar { position: fixed; z-index: 21; left: 10px; right: 10px; bottom: calc(var(--safe-b) + 10px); max-width: 560px; margin: 0 auto;
+    display: flex; align-items: center; gap: 12px; padding: 14px 14px 14px 20px; border-radius: 18px; background: var(--surface); box-shadow: 0 -2px 18px rgba(31,37,46,.18); }
+  .navMain { flex: 1; min-width: 0; }
+  .navMain b { font-size: 22px; line-height: 26px; font-variant-numeric: tabular-nums; }
+  .navMain span { font-size: 15px; color: var(--muted); margin-left: 6px; }
+  #navLeft { font-size: 15px; line-height: 20px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  #navNull { display: flex; flex-direction: column; align-items: center; padding: 6px 10px; border-radius: 8px; background: #000; color: #3CFF7A;
+    font: 700 11px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace; }
+  #navNull b { font-size: 16px; color: #FF5A4E; font-variant-numeric: tabular-nums; }
+  #navEnd { width: auto; min-height: 48px; padding: 0 22px; }
+  .you.puck { width: 0; height: 0; border-radius: 0; background: none; box-shadow: none; border-left: 13px solid transparent; border-right: 13px solid transparent;
+    border-bottom: 30px solid var(--ink); filter: drop-shadow(0 0 0 #fff) drop-shadow(0 2px 4px rgba(0,0,0,.35)); position: relative; }
+  .you.puck::after { content: ""; position: absolute; left: -7px; top: 14px; width: 14px; height: 10px; background: transparent; }
+  body.navigating #toast { top: calc(var(--safe-t) + 120px); }
+
   /* Bottom sheet */
   #sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: none; }
   #sheet.on { display: block; }
@@ -223,6 +247,121 @@
   @keyframes shake { 0%,100% { transform: none } 25% { transform: translateX(-6px) } 75% { transform: translateX(6px) } }
   .links { display: flex; justify-content: center; gap: 24px; margin-top: -6px; }
 
+  /* Final photo */
+  #shutter { display: none; width: 76px; height: 76px; border-radius: 50%; border: 4px solid #fff; background: none; padding: 5px; cursor: pointer; }
+  #shutter span { display: block; width: 100%; height: 100%; border-radius: 50%; background: #fff; transition: transform .1s; }
+  #shutter:active span { transform: scale(.9); }
+  #cam.finalMode #shutter { display: block; }
+  #cam.finalMode #guide, #cam.finalMode #snap, #cam.finalMode #camClueBtn, #cam.finalMode #camClue, #cam.finalMode .typeLink, #cam.finalMode .camTools { display: none !important; }
+  .sub { font-size: 16px; line-height: 24px; color: var(--muted); }
+
+  /* The hack */
+  #hackScreen { background: #000; color: #3CFF7A; overflow: hidden; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+  #hackCanvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #hackScreen::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(0,0,0,.18) 0 1px, transparent 1px 3px); }
+  #hackScreen.flash::before { content: ""; position: absolute; inset: 0; background: #fff; z-index: 2; animation: camFlash .5s ease-out forwards; }
+  @keyframes camFlash { from { opacity: .9 } to { opacity: 0 } }
+  .savedPill { position: absolute; left: 50%; bottom: calc(var(--safe-b) + 40px); transform: translateX(-50%); z-index: 3; display: none; background: var(--glass-strong); color: #fff;
+    font-family: var(--font); font-size: 15px; font-weight: 700; padding: 12px 20px; border-radius: 999px; }
+  #hackScreen.saved .savedPill { display: block; }
+  #term { position: absolute; inset: 0; z-index: 2; display: none; padding: calc(var(--safe-t) + 16px) 14px calc(var(--safe-b) + 16px); overflow: hidden;
+    font-size: 11.5px; line-height: 16px; white-space: pre-wrap; word-break: break-all; text-shadow: 0 0 6px rgba(60,255,122,.45); }
+  #hackScreen.term #term { display: block; }
+  #hackScreen.term #hackCanvas { opacity: 0; }
+  #term .err { color: #FF5A4E; text-shadow: 0 0 6px rgba(255,90,78,.5); }
+  #term .dim { color: #1E9E4A; }
+  #term .white { color: #E8FFE8; }
+  #termCursor { display: inline-block; width: 8px; height: 15px; background: #3CFF7A; vertical-align: -3px; animation: blink 1s steps(2) infinite; }
+  @keyframes blink { 50% { opacity: 0 } }
+  #hackTiles { position: absolute; z-index: 3; left: 0; right: 0; top: calc(var(--safe-t) + 40px); justify-content: center; display: none; }
+  #hackTiles.on { display: flex; }
+  #hackTiles .slot { width: 44px; height: 58px; font-size: 28px; font-family: var(--font); animation: jitter .1s steps(2) infinite; }
+  #ransom { position: absolute; z-index: 4; left: 16px; right: 16px; bottom: calc(var(--safe-b) + 32px); max-width: 480px; margin: 0 auto; display: none;
+    background: rgba(0,0,0,.82); border: 1px solid #3CFF7A; border-radius: 6px; padding: 18px; font-size: 15px; line-height: 22px; color: #E8FFE8; white-space: pre-wrap;
+    box-shadow: 0 0 24px rgba(60,255,122,.25); min-height: 120px; }
+  #ransom.on { display: block; }
+  #ransom::after { content: ""; display: inline-block; width: 8px; height: 16px; background: #3CFF7A; vertical-align: -3px; margin-left: 2px; animation: blink 1s steps(2) infinite; }
+  #hackScreen.whiteout::before { content: ""; position: absolute; inset: 0; background: #fff; z-index: 9; }
+  @keyframes jitter { 0% { transform: translate(0,0) } 50% { transform: translate(-3px,2px) } 100% { transform: translate(2px,-1px) } }
+
+  /* Counter-hack */
+  #game { position: absolute; inset: 0; z-index: 6; display: none; flex-direction: column; background: rgba(0,0,0,.88);
+    padding: calc(var(--safe-t) + 16px) 16px calc(var(--safe-b) + 16px); color: #3CFF7A; }
+  #game.on { display: flex; }
+  .gHead { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; letter-spacing: .06em; }
+  #gTitle { font-weight: 700; font-size: 17px; color: #E8FFE8; }
+  #gProg { color: #FF5A4E; font-variant-numeric: tabular-nums; }
+  .gBar { height: 6px; margin-top: 10px; border: 1px solid #1E9E4A; border-radius: 3px; overflow: hidden; }
+  #gBarFill { display: block; height: 100%; width: 100%; background: #FF5A4E; transition: width .6s cubic-bezier(.2,.8,.2,1); }
+  #gHint { margin: 12px 0 0; font-size: 14px; line-height: 20px; color: #E8FFE8; min-height: 20px; }
+  #gField { position: relative; flex: 1; margin: 8px -16px; overflow: hidden; touch-action: manipulation; }
+  #gLog { font-size: 12px; line-height: 17px; min-height: 68px; }
+  #gLog .err { color: #FF5A4E; } #gLog .white { color: #E8FFE8; }
+  .node { position: absolute; width: 150px; height: 150px; margin: -75px 0 0 -75px; border: 0; background: none; padding: 0; cursor: pointer; color: #3CFF7A; }
+  .node .core { position: absolute; left: 50%; top: 50%; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(60,255,122,.9) 0 30%, rgba(60,255,122,.25) 31% 100%); box-shadow: 0 0 24px rgba(60,255,122,.6); }
+  .node:focus-visible, .blip:focus-visible { outline: none; }
+  .node:focus-visible .core { box-shadow: 0 0 0 3px #E8FFE8, 0 0 24px rgba(60,255,122,.6); }
+  .blip:focus-visible .bDot { box-shadow: 0 0 0 3px #E8FFE8, 0 0 18px #FF3B30; }
+  .node .ring { position: absolute; left: 50%; top: 50%; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%; border: 3px solid #E8FFE8;
+    animation: ringClose 1.7s linear infinite; }
+  @keyframes ringClose { from { transform: scale(3.2); opacity: .2 } 70% { opacity: 1 } to { transform: scale(1); opacity: 1 } }
+  .node .nLabel { position: absolute; left: 0; right: 0; top: calc(50% + 40px); font: 700 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .08em; }
+  .node.burst .core { animation: burst .45s ease-out forwards; } .node.burst .ring { animation: none; opacity: 0; }
+  @keyframes burst { to { transform: scale(2.4); opacity: 0 } }
+  .gFloat { position: absolute; transform: translateX(-50%); font: 700 16px/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: #E8FFE8; pointer-events: none; animation: floatUp .9s ease-out forwards; }
+  .gFloat.good { color: #3CFF7A; font-size: 20px; text-shadow: 0 0 10px rgba(60,255,122,.8); }
+  .gFloat.dim { color: #8FAF96; font-size: 13px; }
+  @keyframes floatUp { from { opacity: 1; transform: translate(-50%, 0) } to { opacity: 0; transform: translate(-50%, -30px) } }
+  .radar { position: absolute; border-radius: 50%; border: 1px solid rgba(60,255,122,.6); overflow: hidden; background: radial-gradient(circle, rgba(60,255,122,.08), rgba(0,0,0,0) 70%); }
+  .radar .sweep { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 0deg, rgba(60,255,122,.45), rgba(60,255,122,0) 25%, rgba(60,255,122,0)); animation: sweep 2.4s linear infinite; }
+  @keyframes sweep { to { transform: rotate(360deg) } }
+  .radar .rr { position: absolute; border-radius: 50%; border: 1px solid rgba(60,255,122,.25); }
+  .radar .r1 { inset: 16%; } .radar .r2 { inset: 32%; } .radar .r3 { inset: 46%; }
+  .radar .cross { position: absolute; background: rgba(60,255,122,.2); } .radar .cross.h { left: 0; right: 0; top: 50%; height: 1px; } .radar .cross.v { top: 0; bottom: 0; left: 50%; width: 1px; }
+  .radar.locked .sweep { animation-duration: .6s; }
+  .blip { position: absolute; width: 120px; height: 120px; margin: -60px 0 0 -60px; border: 0; background: none; padding: 0; cursor: pointer; }
+  .bDot { position: absolute; left: 50%; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; background: #FF3B30; box-shadow: 0 0 0 6px rgba(255,59,48,.25), 0 0 18px #FF3B30; animation: pulse .8s infinite; }
+  .bTag { position: absolute; left: 50%; top: calc(50% + 16px); transform: translateX(-50%); font: 700 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: #FF5A4E; letter-spacing: .08em; }
+  .blip.locked .bDot { animation: none; }
+  .crosshair { position: absolute; width: 90px; height: 90px; margin: -45px 0 0 -45px; pointer-events: none; animation: lockIn .45s cubic-bezier(.2,.8,.2,1) forwards; }
+  .crosshair svg { width: 100%; height: 100%; fill: none; stroke: #E8FFE8; stroke-width: 4; }
+  @keyframes lockIn { from { transform: scale(2.6) rotate(45deg); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+  .tri { position: absolute; left: 0; top: 0; pointer-events: none; }
+  .tri line { stroke: #3CFF7A; stroke-width: 1.5; stroke-dasharray: 600; stroke-dashoffset: 600; animation: triDraw .6s ease-out forwards; }
+  @keyframes triDraw { to { stroke-dashoffset: 0 } }
+  .gCoord, .gAddr { position: absolute; left: 0; right: 0; text-align: center; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; pointer-events: none; }
+  .gCoord { bottom: calc(var(--safe-b) + 150px); font-size: 18px; color: #E8FFE8; font-variant-numeric: tabular-nums; }
+  .gAddr { bottom: calc(var(--safe-b) + 110px); font-size: 20px; font-weight: 700; color: #3CFF7A; text-shadow: 0 0 12px rgba(60,255,122,.7); }
+  @media (prefers-reduced-motion: reduce) { .node .ring { animation: none; transform: scale(1.4); } .radar .sweep { animation: none; } .crosshair { animation: none; } .tri line { animation: none; stroke-dashoffset: 0; } }
+
+  /* The rescue */
+  #recoverScreen { background: var(--page); }
+  .rcInner { justify-content: center; gap: 20px; }
+  .rcKicker { font-size: 13px; line-height: 18px; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  #rcTiles .slot { width: 46px; height: 60px; font-size: 30px; transition: transform .16s; }
+  #rcTiles .slot.flip { transform: rotateX(90deg); }
+  .rcText { font-size: 17px; line-height: 25px; color: var(--muted); }
+  .rcClock { font-size: 64px; line-height: 1; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+  #top.urgent #clock { color: var(--signal); }
+  #toast { position: fixed; z-index: 40; left: 12px; right: 12px; top: calc(var(--safe-t) + 70px); max-width: 460px; margin: 0 auto; padding: 14px 16px;
+    background: #000; color: #E8FFE8; border: 1px solid #3CFF7A; border-radius: 8px; box-shadow: 0 6px 24px rgba(0,0,0,.35), 0 0 18px rgba(60,255,122,.2);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 14px; line-height: 20px; cursor: pointer;
+    transform: translateY(calc(-100% - 300px)); visibility: hidden; transition: transform .45s cubic-bezier(.2,.8,.2,1), visibility 0s linear .45s; }
+  #toast.on { transform: none; visibility: visible; transition: transform .45s cubic-bezier(.2,.8,.2,1), visibility 0s; }
+  #toast b { color: #3CFF7A; }
+  .thief { display: flex; align-items: center; gap: 6px; padding: 6px 10px 6px 8px; border-radius: 6px; background: #000; color: #3CFF7A; border: 1px solid #3CFF7A;
+    font: 700 13px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; box-shadow: 0 0 0 3px rgba(255,255,255,.9), 0 0 16px rgba(60,255,122,.45); white-space: nowrap; }
+  .tDot { width: 8px; height: 8px; border-radius: 50%; background: #FF3B30; animation: pulse 1s infinite; }
+  .thief.waiting .tDot { animation-duration: .45s; }
+
+  /* The end */
+  #endScreen { background: var(--ink); color: var(--cream); overflow: hidden; }
+  .introTiles.end span { box-shadow: none; background: var(--cream); color: var(--ink); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 24px; }
+  .endStats { justify-content: flex-start; gap: 32px; }
+  .endStats span { color: var(--mist); }
+  .endStats b { color: var(--cream); }
+
   /* Progress panel */
   #progDlg { border: 0; border-radius: 20px; padding: 24px; width: min(92vw, 420px); max-height: 80vh; color: var(--text); background: var(--surface); }
   #progDlg::backdrop { background: rgba(31,37,46,.5); }
@@ -251,6 +390,7 @@
     #resCard { transition: none; }
     .kes-p { animation: none; opacity: 1; transform: translate(-50%,-50%) translate(var(--dx),var(--dy)); }
     .kes-f { animation: none; }
+    .glitching #twistShot, .glitching #twistTitle, .glitching #twistText, .glitching #twistTiles, .glitching::after { animation: none; }
   }
 </style>
 </head>
@@ -267,6 +407,18 @@
 </div>
 
 <button id="center" aria-label="Center the map on me"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></button>
+
+<div id="navUI">
+  <div id="navBanner" role="status" aria-live="polite">
+    <svg id="navIco" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></svg>
+    <div><div id="navDist"></div><div id="navText"></div></div>
+  </div>
+  <div id="navBar">
+    <div class="navMain"><b id="navEta"></b><span>arrival</span><div id="navLeft"></div></div>
+    <div id="navNull" style="display:none"><span>NULL</span><b id="navNullT"></b></div>
+    <button class="btn" id="navEnd">End</button>
+  </div>
+</div>
 
 <div id="sheet"><div class="sheetIn" id="sheetIn"></div></div>
 
@@ -329,6 +481,7 @@
     </div>
     <div class="pill" aria-live="polite"><span class="dot"></span><span id="status">Line it up with the outline</span></div>
     <button class="typeLink" id="typeIt">Can't get it? Type the answer</button>
+    <button id="shutter" aria-label="Take the photo"><span></span></button>
   </div>
 </section>
 
@@ -347,6 +500,46 @@
     </form>
     <button class="btn" id="next"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span id="nextLabel">Next clue</span></button>
     <div class="links"><button class="link" id="retake">Retake</button><button class="link" id="share" style="display:none">Share photo</button></div>
+  </div>
+</section>
+
+<section id="hackScreen" class="screen" aria-label="Final photo" aria-live="polite">
+  <canvas id="hackCanvas"></canvas>
+  <div class="savedPill">Saved ✓</div>
+  <div id="term"><span id="termCursor"></span></div>
+  <div class="tiles" id="hackTiles" aria-hidden="true"></div>
+  <div id="ransom"></div>
+  <div id="game" aria-live="polite">
+    <div class="gHead"><span id="gTitle">COUNTER-HACK</span><span id="gProg">NULL ACCESS 100%</span></div>
+    <div class="gBar"><span id="gBarFill"></span></div>
+    <p id="gHint"></p>
+    <div id="gField"></div>
+    <div id="gLog"></div>
+  </div>
+</section>
+
+<section id="recoverScreen" class="screen intro" aria-label="Rescue your gift">
+  <div class="inner rcInner">
+    <p class="rcKicker">Signal locked. NULL tracked.</p>
+    <div class="tiles" id="rcTiles" aria-label="New code: 5, 3, 1, 5, T, H"></div>
+    <h1 class="introTitle" style="margin:0">Rescue your gift</h1>
+    <p class="rcText">NULL is heading to 531 Fifth Avenue, down Fifth at 44th Street. Get your gift back before the timer runs out.</p>
+    <div class="rcClock" id="rcClock" aria-label="Time left">30:00</div>
+    <button class="btn" id="rcGo"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-8 18-2-8z"/></svg>Start the rescue</button>
+  </div>
+</section>
+
+<div id="toast" role="status" aria-live="assertive"><b>NULL:</b> <span id="toastText"></span></div>
+
+<section id="endScreen" class="screen intro" aria-label="Happy birthday">
+  <div class="fw" aria-hidden="true"><div class="b" style="left:28%;top:42%"><span class="kes-f" style="animation-delay:0s"></span><span class="kes-p" style="--dx:78px;--dy:0px;animation-delay:0s">🎉</span><span class="kes-p" style="--dx:55px;--dy:55px;animation-delay:0s">🎂</span><span class="kes-p" style="--dx:0px;--dy:78px;animation-delay:0s">🎈</span><span class="kes-p" style="--dx:-55px;--dy:55px;animation-delay:0s">✨</span><span class="kes-p" style="--dx:-78px;--dy:0px;animation-delay:0s">🎁</span><span class="kes-p" style="--dx:-55px;--dy:-55px;animation-delay:0s">🥳</span><span class="kes-p" style="--dx:0px;--dy:-78px;animation-delay:0s">🎊</span><span class="kes-p" style="--dx:55px;--dy:-55px;animation-delay:0s">⭐</span></div><div class="b" style="left:73%;top:30%"><span class="kes-f" style="animation-delay:0.9s"></span><span class="kes-p" style="--dx:78px;--dy:0px;animation-delay:0.9s">✨</span><span class="kes-p" style="--dx:55px;--dy:55px;animation-delay:0.9s">🎁</span><span class="kes-p" style="--dx:0px;--dy:78px;animation-delay:0.9s">🥳</span><span class="kes-p" style="--dx:-55px;--dy:55px;animation-delay:0.9s">🎊</span><span class="kes-p" style="--dx:-78px;--dy:0px;animation-delay:0.9s">⭐</span><span class="kes-p" style="--dx:-55px;--dy:-55px;animation-delay:0.9s">🎉</span><span class="kes-p" style="--dx:0px;--dy:-78px;animation-delay:0.9s">🎂</span><span class="kes-p" style="--dx:55px;--dy:-55px;animation-delay:0.9s">🎈</span></div><div class="b" style="left:54%;top:70%"><span class="kes-f" style="animation-delay:1.8s"></span><span class="kes-p" style="--dx:78px;--dy:0px;animation-delay:1.8s">🥳</span><span class="kes-p" style="--dx:55px;--dy:55px;animation-delay:1.8s">🎊</span><span class="kes-p" style="--dx:0px;--dy:78px;animation-delay:1.8s">⭐</span><span class="kes-p" style="--dx:-55px;--dy:55px;animation-delay:1.8s">🎉</span><span class="kes-p" style="--dx:-78px;--dy:0px;animation-delay:1.8s">🎂</span><span class="kes-p" style="--dx:-55px;--dy:-55px;animation-delay:1.8s">🎈</span><span class="kes-p" style="--dx:0px;--dy:-78px;animation-delay:1.8s">✨</span><span class="kes-p" style="--dx:55px;--dy:-55px;animation-delay:1.8s">🎁</span></div></div>
+  <div class="inner">
+    <div class="introTiles end" aria-label="5, 3, 1, 5, T, H"><span>5</span><span>3</span><span>1</span><span>5</span><span>T</span><span>H</span></div>
+    <div class="bday"><h1>Happy birthday, Kes!</h1><p>Your gift is waiting at the Order Pickup counter inside. Bring your ID.</p></div>
+    <div class="introFoot">
+      <div class="stats endStats" id="endStats"></div>
+      <button class="btn light" id="endMap">See your whole route</button>
+    </div>
   </div>
 </section>
 
@@ -429,6 +622,10 @@ const HUNT = {
   finalText: "Look at what you've collected. What does it tell you?",
   /* Where the code leads: directions appear on the map when the last stop is done */
   final: { name: "767 Fifth Avenue", short: "767 5th", lat: 40.76384, lng: -73.97285, address: "767 5th Ave, New York, NY 10153" },
+  /* After the final photo at 767 Fifth, the code "glitches" and reroutes Kes to the gift */
+  twist: { name: "Best Buy, 531 Fifth Avenue", short: "531 5th", lat: 40.75484, lng: -73.97968, address: "531 5th Ave, New York, NY 10017",
+           from: ["7", "6", "7", "5", "T", "H"], to: ["5", "3", "1", "5", "T", "H"] },
+  arriveMetres: 80,
   nudges: ["Read it as a number and a street.", "You're standing on that street right now.", "Walk north. Look for glass."]
 };
 
@@ -471,11 +668,14 @@ function initMap() {
     map.addSource("shots", { type: "geojson", data: asLine([]) });
     map.addLayer({ id: "shots", type: "line", source: "shots", layout: { "line-cap": "round" },
       paint: { "line-color": "#B3362B", "line-width": 4, "line-dasharray": [0.2, 2.5] } });
+    map.addSource("dirDone", { type: "geojson", data: asLine([]) });
+    map.addLayer({ id: "dir-done", type: "line", source: "dirDone", layout: { "line-cap": "round", "line-join": "round" },
+      paint: { "line-color": "#A3ACB6", "line-width": 7 } });
     map.addSource("dir", { type: "geojson", data: asLine([]) });
     map.addLayer({ id: "dir-casing", type: "line", source: "dir", layout: { "line-cap": "round", "line-join": "round" },
-      paint: { "line-color": "#FFFFFF", "line-width": 9 } });
+      paint: { "line-color": "#0060DF", "line-width": 11 } });
     map.addLayer({ id: "dir", type: "line", source: "dir", layout: { "line-cap": "round", "line-join": "round" },
-      paint: { "line-color": "#2E3642", "line-width": 5 } });
+      paint: { "line-color": "#0A84FF", "line-width": 7 } });
     brandMap();
     mapReady = true;
     redrawRoute();
@@ -527,11 +727,11 @@ function setMini(on) {
   setTimeout(() => { map.resize(); if (lastPos) map.jumpTo({ center: [lastPos.lng, lastPos.lat], zoom: on ? 16.5 : map.getZoom() }); }, 50);
 }
 function showCenter() {
-  const sheetH = $("sheet").classList.contains("on") ? $("sheetIn").offsetHeight : 0;
+  const sheetH = navOn ? $("navBar").offsetHeight + 12 : $("sheet").classList.contains("on") ? $("sheetIn").offsetHeight : 0;
   $("center").style.bottom = `calc(${sheetH + 12}px)`;
   $("center").classList.toggle("on", !!lastPos && !follow && !$("map").classList.contains("mini"));
 }
-$("center").addEventListener("click", () => { follow = true; if (lastPos && map) map.easeTo({ center: [lastPos.lng, lastPos.lat], zoom: Math.max(map.getZoom(), 16) }); showCenter(); });
+$("center").addEventListener("click", () => { follow = true; if (navOn) { navUpdate(true); showCenter(); return; } if (lastPos && map) map.easeTo({ center: [lastPos.lng, lastPos.lat], zoom: Math.max(map.getZoom(), 16) }); showCenter(); });
 
 /* ---------- Location tracking ---------- */
 let watchId = null;
@@ -637,13 +837,16 @@ function onPos(p) {
   if (map) {
     if (!youMarker) {
       const el = document.createElement("div"); el.className = "you";
-      youMarker = new maplibregl.Marker({ element: el }).setLngLat([lng, lat]).addTo(map);
+      youMarker = new maplibregl.Marker({ element: el, rotationAlignment: "map", pitchAlignment: "map" }).setLngLat([lng, lat]).addTo(map);
     } else youMarker.setLngLat([lng, lat]);
     if (firstFix) { map.jumpTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), 16) }); firstFix = false; }
-    else if (follow) map.easeTo({ center: [lng, lat], duration: 600 });
+    else if (follow && !navOn) map.easeTo({ center: [lng, lat], duration: 600 });
   }
   if (state.finishedAt && dirOrigin && metres(dirOrigin, [lat, lng]) > 150) showDirections();
-  const hunting = state.startedAt && !state.finishedAt;
+  checkArrival(lat, lng, accuracy);
+  if (state.rescueStarted && !state.doneAt) { checkTaunts(lat, lng); updateThief(); }
+  if (navOn) navUpdate();
+  const hunting = state.startedAt && !state.doneAt;
   if (hunting && accuracy <= 60) {
     const now = Date.now(), last = state.path[state.path.length - 1];
     const d = last ? metres(last, [lat, lng]) : Infinity;
@@ -665,11 +868,12 @@ function fmt(ms) {
   return h ? `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}` : `${m}:${String(sec).padStart(2, "0")}`;
 }
 function elapsed() { return state.startedAt ? (state.finishedAt || Date.now()) - state.startedAt : 0; }
-function updateStats() { $("clock").textContent = fmt(elapsed()); $("dist").textContent = totalMiles().toFixed(1) + " mi"; }
+function totalTime() { return state.startedAt ? (state.doneAt || Date.now()) - state.startedAt : 0; }
+function updateStats() { $("clock").textContent = fmt(elapsed()); $("dist").textContent = totalMiles().toFixed(1) + " mi"; if (typeof updateRescueClock === "function" && state.twistedAt) updateRescueClock(); }
 setInterval(updateStats, 1000);
 let wake = null;
 async function keepAwake() {
-  if (!state.startedAt || state.finishedAt || !navigator.wakeLock) return;
+  if (!state.startedAt || state.doneAt || !navigator.wakeLock) return;
   try { wake = await navigator.wakeLock.request("screen"); } catch (e) {}
 }
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") keepAwake(); });
@@ -678,9 +882,12 @@ document.addEventListener("visibilitychange", () => { if (document.visibilitySta
 function showScreen(id) {
   document.querySelectorAll(".screen").forEach(s => s.classList.toggle("on", s.id === id));
   const onMap = !id;
-  $("top").classList.toggle("on", onMap && !!state.startedAt && state.i < HUNT.stops.length);
+  const rescuing = !!(state.twistedAt && state.rescueStarted && !state.doneAt);
+  $("top").classList.toggle("on", onMap && !!state.startedAt && (state.i < HUNT.stops.length || rescuing));
   $("sheet").classList.toggle("floating", onMap && !!state.startedAt && state.i >= HUNT.stops.length);
-  $("sheet").classList.toggle("on", onMap);
+  $("sheet").classList.toggle("on", onMap && !navOn);
+  $("navUI").classList.toggle("on", onMap && navOn);
+  if (navOn && onMap) $("top").classList.remove("on");
   setMini(false);
   if (!onMap) $("center").classList.remove("on"); else setTimeout(showCenter, 60);
 }
@@ -709,7 +916,7 @@ function pastHTML() {
 let collapsed = false, nudgeIx = 0, introStep = 0;
 function render(popIndex) {
   stopCamera();
-  $("board").innerHTML = boardHTML(popIndex);
+  $("board").innerHTML = state.twistedAt ? HUNT.twist.to.map(c => `<div class="slot filled">${esc(c)}</div>`).join("") : boardHTML(popIndex);
   $("board").setAttribute("aria-label", codeLabel());
   updateStats();
   const sh = $("sheetIn");
@@ -719,6 +926,74 @@ function render(popIndex) {
   if (state.i >= HUNT.stops.length) {
     if (!state.finishedAt) { state.finishedAt = Date.now(); save(); }
     sh.classList.remove("collapsed");
+    const dirHTML = `
+        <div class="dirBox" id="dirBox">
+          <p id="dirSum">Finding a walking route…</p>
+          <ol id="dirSteps" class="dirSteps"></ol>
+          <button class="link center" id="dirToggle" style="margin-top:-8px">Show the steps</button>
+          <button class="btn" id="navGo"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-8 18-2-8z"/></svg>Start directions</button>
+          <a class="link center" id="mapsLink" target="_blank" rel="noopener" style="margin-top:-8px">Open in Apple or Google Maps instead</a>
+        </div>`;
+    const wireDir = () => {
+      $("mapsLink").href = mapsUrl();
+      $("navGo").onclick = () => { if (dirData) navStart(); else showDirections(true).then(navStart); };
+      $("dirToggle").onclick = () => { const o = $("dirBox").classList.toggle("open"); $("dirToggle").textContent = o ? "Hide the steps" : "Show the steps"; };
+    };
+    const tiles = (arr) => arr.map(c => `<div class="slot filled">${esc(c)}</div>`).join("");
+
+    /* The very end: at the gift */
+    if (state.doneAt && !state.rescuedSeen) { runRescued(); return; }
+    if (state.doneAt) {
+      $("endStats").innerHTML = `<div><b>${fmt(totalTime())}</b><span>Time</span></div><div><b>${totalMiles().toFixed(1)} mi</b><span>Walked</span></div>`;
+      if (!endOnMap) { showScreen("endScreen"); return; }
+      sh.innerHTML = `
+        <div class="body fin">
+          <div class="tiles finTiles">${tiles(HUNT.twist.to)}</div>
+          <h1 class="finQ">Happy birthday, Kes!</h1>
+          <div class="stats">${$("endStats").innerHTML}</div>
+          <button class="link center" id="endBack">Back to the celebration</button>
+          <button class="link quiet" id="restartBtn">Start over</button>
+        </div>`;
+      $("endBack").onclick = () => { endOnMap = false; render(); };
+      $("restartBtn").onclick = askStartOver;
+      showScreen(null); fitAll(); return;
+    }
+
+    /* Hacked: the rescue */
+    if (state.hackedAt && !state.twistedAt) beginRescue();
+    if (state.twistedAt) {
+      if (!state.rescueStarted) { showRecover(true); return; }
+      sh.innerHTML = `
+        <div class="body fin">
+          <h1 class="finQ">Rescue your gift</h1>
+          <p class="sub">NULL is on Fifth Avenue, about five minutes ahead of you. Follow them to 531 Fifth.</p>
+          ${dirHTML}
+          <button class="btn secondary" id="hereBtn">I'm here</button>
+          <button class="link quiet" id="restartBtn">Start over</button>
+        </div>`;
+      wireDir();
+      $("hereBtn").onclick = () => { state.doneAt = Date.now(); save(); render(); };
+      $("restartBtn").onclick = askStartOver;
+      showScreen(null); showDirections(); updateRescueClock(); return;
+    }
+
+    /* Arrived at 767 Fifth: take the final photo */
+    if (nearNow) {
+      sh.innerHTML = `
+        <div class="body fin">
+          <div class="tiles finTiles">${boardHTML()}</div>
+          <h1 class="finQ">You made it.</h1>
+          <p class="sub">Take one last photo to finish the hunt.</p>
+          <button class="btn" id="finalCam"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg>Take the final photo</button>
+          <p class="msg" id="finalMsg" aria-live="polite"></p>
+          <button class="link quiet" id="restartBtn">Start over</button>
+        </div>`;
+      $("finalCam").onclick = openFinalCamera;
+      $("restartBtn").onclick = askStartOver;
+      showScreen(null); showDirections(); return;
+    }
+
+    /* The question, with the way there */
     sh.innerHTML = `
       <div class="grab" aria-hidden="true"><span></span></div>
       <div class="body fin">
@@ -727,21 +1002,17 @@ function render(popIndex) {
         <div class="stats"><div><b>${fmt(elapsed())}</b><span>Time</span></div><div><b>${totalMiles().toFixed(1)} mi</b><span>Walked</span></div></div>
         <p class="hint" id="nudgeText" style="text-align:left"></p>
         <button class="link center" id="nudgeBtn">I need a nudge</button>
-        <div class="dirBox" id="dirBox">
-          <p id="dirSum">Finding a walking route…</p>
-          <ol id="dirSteps" class="dirSteps"></ol>
-          <button class="link center" id="dirToggle" style="margin-top:-8px">Show the steps</button>
-          <a class="btn" id="mapsLink" target="_blank" rel="noopener"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-8 18-2-8z"/></svg>Open in Maps</a>
-        </div>
+        ${dirHTML}
+        <button class="btn secondary" id="hereBtn">I'm here</button>
         <button class="link quiet" id="restartBtn">Start over</button>
       </div>`;
     $("nudgeBtn").onclick = () => {
       if (nudgeIx < HUNT.nudges.length) { const n = $("nudgeText"); n.textContent = HUNT.nudges.slice(0, ++nudgeIx).join(" "); n.style.display = "block"; }
       if (nudgeIx >= HUNT.nudges.length) $("nudgeBtn").style.display = "none";
     };
+    $("hereBtn").onclick = () => { nearNow = true; render(); };
     $("restartBtn").onclick = askStartOver;
-    $("mapsLink").href = mapsUrl();
-    $("dirToggle").onclick = () => { const o = $("dirBox").classList.toggle("open"); $("dirToggle").textContent = o ? "Hide the steps" : "Show the steps"; };
+    wireDir();
     showScreen(null);
     showDirections();
     return;
@@ -819,18 +1090,135 @@ function startOver() {
   stopCamera();
   try { localStorage.removeItem(HUNT.key); } catch (e) {}
   state = { i: 0, found: [], startedAt: null, finishedAt: null, path: [], shots: [] };
-  nudgeIx = 0; collapsed = false; introStep = 0;
+  nudgeIx = 0; collapsed = false; introStep = 0; nearNow = false; endOnMap = false;
+  $("toast").classList.remove("on"); $("top").classList.remove("urgent");
   $("startMsg").textContent = ""; $("skipLoc").style.display = "none";
   $("startBtn").lastChild.textContent = "Allow location and start";
+  navStop();
   redrawRoute();
   clearDir();
+  updateThief();
   render();
+}
+
+/* ---------- Turn-by-turn navigation (Apple Maps style) ---------- */
+let navOn = false, navRoute = null, offCount = 0, rerouting = false, navBearing = 0;
+const WALK_MPS = 1.35;
+const NAV_ICONS = {
+  straight: '<path d="M12 21V4M6 10l6-6 6 6"/>',
+  right: '<path d="M6 21v-8a4 4 0 0 1 4-4h10M15 4l5 5-5 5"/>',
+  left: '<path d="M18 21v-8a4 4 0 0 0-4-4H4M9 4L4 9l5 5"/>',
+  "slight right": '<path d="M9 21v-7l8-8M11 6h6v6"/>',
+  "slight left": '<path d="M15 21v-7L7 6M13 6H7v6"/>',
+  uturn: '<path d="M8 21V10a4 4 0 0 1 8 0v6M12 13l4 4 4-4"/>',
+  arrive: '<path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>'
+};
+function navIcon(step) {
+  if (!step || step.type === "arrive") return NAV_ICONS.arrive;
+  const m = (step.mod || "").replace("sharp ", "");
+  if (m === "uturn") return NAV_ICONS.uturn;
+  return NAV_ICONS[m] || NAV_ICONS.straight;
+}
+function bearingOf(a, b) {          /* degrees clockwise from north, a and b as [lng, lat] */
+  const [x1, y1] = toXY(a, a[1]), [x2, y2] = toXY(b, a[1]);
+  return (Math.atan2(x2 - x1, y2 - y1) * 180 / Math.PI + 360) % 360;
+}
+function nearestOnRoute(R, C, pt) {
+  const q = toXY(pt, R.lat0); let best = Infinity, along = 0;
+  for (let k = 1; k < R.P.length; k++) {
+    const a = R.P[k - 1], b = R.P[k], vx = b[0] - a[0], vy = b[1] - a[1], L = vx * vx + vy * vy || 1;
+    const t = Math.max(0, Math.min(1, ((q[0] - a[0]) * vx + (q[1] - a[1]) * vy) / L));
+    const d = Math.hypot(a[0] + t * vx - q[0], a[1] + t * vy - q[1]);
+    if (d < best) { best = d; along = R.cum[k - 1] + t * Math.sqrt(L); }
+  }
+  return { along, off: best };
+}
+function navDist(m) {
+  const ft = m * 3.28084;
+  if (ft < 528) return ft < 60 ? "Now" : `${Math.round(ft / 50) * 50} ft`;
+  return `${(m / 1609.34).toFixed(1)} mi`;
+}
+function navStart() {
+  if (!dirData) return;
+  navOn = true; follow = true; offCount = 0;
+  document.body.classList.add("navigating");
+  showScreen(null);
+  navUpdate(true);
+}
+function navStop() {
+  if (!navOn) return;
+  navOn = false;
+  document.body.classList.remove("navigating");
+  if (youMarker) { youMarker.getElement().classList.remove("puck"); youMarker.setRotation(0); }
+  if (map) { map.easeTo({ pitch: 0, bearing: 0, padding: { top: 0, bottom: 0, left: 0, right: 0 }, duration: 600 }); }
+  drawDir(); fitDir();
+}
+$("navEnd").addEventListener("click", () => { navStop(); render(); });
+async function navUpdate(first) {
+  if (!navOn || !dirData) return;
+  const C = dirData.coords;
+  if (!navRoute || navRoute.C !== C) {
+    navRoute = Object.assign(routeInfo(C), { C });
+    dirData.steps.forEach(st => { st.along = st.loc ? nearestOnRoute(navRoute, C, st.loc).along : navRoute.total; });
+  }
+  const R = navRoute;
+  if (!lastPos) {
+    $("navDist").textContent = "";
+    $("navText").textContent = "Waiting for your location…";
+    $("navIco").innerHTML = NAV_ICONS.straight;
+    return;
+  }
+  const here = [lastPos.lng, lastPos.lat], { along, off } = nearestOnRoute(R, C, here);
+  /* off the route: reroute after two fixes in a row */
+  if (!dirData.straight && off > 45 && (lastPos.accuracy || 0) <= 40) offCount++; else offCount = 0;
+  if (offCount >= 2 && !rerouting) {
+    rerouting = true; offCount = 0;
+    $("navDist").textContent = ""; $("navText").textContent = "Rerouting…";
+    await showDirections(true);
+    rerouting = false;
+    return;
+  }
+  /* next maneuver */
+  const next = dirData.steps.find(st => st.type !== "depart" && st.along > along + 3);
+  const left = Math.max(0, R.total - along);
+  if (dirData.straight || !next) {
+    $("navIco").innerHTML = left < 25 ? NAV_ICONS.arrive : NAV_ICONS.straight;
+    $("navDist").textContent = navDist(left);
+    $("navText").textContent = left < 25 ? `Arrive at ${dest().name}` : `Head ${compass(bearingOf(here, [dest().lng, dest().lat]))} toward ${dest().name}`;
+  } else {
+    $("navIco").innerHTML = navIcon(next);
+    $("navDist").textContent = navDist(next.along - along);
+    $("navText").textContent = next.text;
+  }
+  /* bottom bar */
+  const secs = left / WALK_MPS, eta = new Date(Date.now() + secs * 1000);
+  $("navEta").textContent = eta.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  $("navLeft").textContent = `${Math.max(1, Math.round(secs / 60))} min · ${distText(left)}`;
+  const rescuing = state.twistedAt && state.rescueStarted && !state.doneAt;
+  $("navNull").style.display = rescuing ? "" : "none";
+  if (rescuing) $("navNullT").textContent = fmt(Math.max(0, rescueLeft()));
+  /* route split: walked part grey, the rest blue */
+  const cut = pointAt(R, C, along);
+  const done = [], rest = [cut];
+  C.forEach((c, k) => (R.cum[k] <= along ? done : rest).push(c));
+  done.push(cut);
+  if (mapReady) { map.getSource("dir").setData(asLine(rest)); map.getSource("dirDone").setData(asLine(done)); }
+  /* camera: heading-up, tilted, Kes low on the screen */
+  const ahead = pointAt(R, C, Math.min(R.total, along + 25));
+  if (Math.hypot(ahead[0] - cut[0], ahead[1] - cut[1]) > 1e-7) navBearing = bearingOf(cut, ahead);
+  if (youMarker) { youMarker.getElement().classList.add("puck"); youMarker.setRotation(navBearing); }
+  if (map && follow) {
+    const h = innerHeight;
+    map.easeTo({ center: here, bearing: navBearing, pitch: 55, zoom: 17.6, duration: first ? 1000 : 900,
+      padding: { top: Math.round(h * .42), bottom: 130, left: 0, right: 0 } });
+  }
+  showCenter();
 }
 
 /* ---------- Directions to the final spot ---------- */
 let dirData = null, dirOrigin = null, dirBusy = false, destMarker = null;
 function mapsUrl() {
-  const f = HUNT.final, q = encodeURIComponent(f.address);
+  const f = dest(), q = encodeURIComponent(f.address);
   return IOS ? `https://maps.apple.com/?daddr=${q}&dirflg=w` : `https://www.google.com/maps/dir/?api=1&destination=${q}&travelmode=walking`;
 }
 function dirOriginNow() {
@@ -851,7 +1239,7 @@ function stepText(st) {
   const mod = (m.modifier || "").replace("uturn", "around");
   switch (m.type) {
     case "depart": return `Head ${compass(m.bearing_after || 0)}${name ? ` on ${name}` : ""}`;
-    case "arrive": return `Arrive at ${HUNT.final.name}`;
+    case "arrive": return `Arrive at ${dest().name}`;
     case "turn": case "end of road": case "fork": case "on ramp": case "off ramp":
       return mod === "straight" ? `Continue${onto}` : `Turn ${mod}${onto}`;
     case "roundabout": case "rotary": return `Go around the circle${onto ? ` and exit${onto}` : ""}`;
@@ -859,7 +1247,7 @@ function stepText(st) {
   }
 }
 async function fetchRoute(from) {
-  const f = HUNT.final;
+  const f = dest();
   const url = `https://routing.openstreetmap.de/routed-foot/route/v1/foot/${from[1]},${from[0]};${f.lng},${f.lat}?overview=full&geometries=geojson&steps=true`;
   const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 12000);
   try {
@@ -872,13 +1260,13 @@ async function fetchRoute(from) {
       const text = stepText(st), last = steps[steps.length - 1];
       if (last && last.text === text) { last.m += st.distance; return; }   /* merge repeats */
       if (st.maneuver.type !== "arrive" && st.distance < 8 && steps.length) return; /* skip tiny jogs */
-      steps.push({ text, m: st.distance });
+      steps.push({ text, m: st.distance, loc: st.maneuver.location, type: st.maneuver.type, mod: st.maneuver.modifier });
     });
     return { coords: route.geometry.coordinates, metres: route.distance, minutes: route.duration / 60, steps };
   } finally { clearTimeout(t); }
 }
 async function showDirections(force) {
-  const f = HUNT.final, from = dirOriginNow();
+  const f = dest(), from = dirOriginNow();
   if (dirBusy) return;
   if (!force && dirData && dirOrigin && metres(dirOrigin, from) < 150) { renderDir(); return; }
   dirBusy = true; dirOrigin = from;
@@ -901,15 +1289,17 @@ function renderDir() {
   }
   if (list) list.innerHTML = dirData.steps.map(st => `<li>${esc(st.text)}${st.m >= 8 ? `<span>${distText(st.m)}</span>` : ""}</li>`).join("");
   drawDir();
-  fitDir();
+  updateThief();
+  if (navOn) { navRoute = null; navUpdate(true); } else fitDir();
 }
 function drawDir() {
   if (!map) return;
+  if (mapReady && !navOn) map.getSource("dirDone").setData(asLine([]));
   const on = !!(dirData && state.finishedAt);
   if (mapReady) map.getSource("dir").setData(on ? asLine(dirData.coords) : asLine([]));
   if (on && !destMarker) {
-    const el = document.createElement("div"); el.className = "dest"; el.textContent = HUNT.final.short;
-    destMarker = new maplibregl.Marker({ element: el, anchor: "bottom", offset: [0, -6] }).setLngLat([HUNT.final.lng, HUNT.final.lat]).addTo(map);
+    const el = document.createElement("div"); el.className = "dest"; el.textContent = dest().short;
+    destMarker = new maplibregl.Marker({ element: el, anchor: "bottom", offset: [0, -6] }).setLngLat([dest().lng, dest().lat]).addTo(map);
   } else if (!on && destMarker) { destMarker.remove(); destMarker = null; }
 }
 function fitDir() {
@@ -921,7 +1311,17 @@ function fitDir() {
   map.fitBounds(b, { padding: { top: 110, left: 50, right: 50, bottom: Math.min(sheetH + 30, h - 220) }, maxZoom: 17, duration: 800 });
   follow = false; showCenter();
 }
-function clearDir() { dirData = null; dirOrigin = null; drawDir(); }
+function clearDir() { dirData = null; dirOrigin = null; if (destMarker) { destMarker.remove(); destMarker = null; } drawDir(); }
+function dest() { return state.twistedAt ? HUNT.twist : HUNT.final; }
+/* ---------- Arriving at the Apple Store, then at Best Buy ---------- */
+let nearNow = false;
+function checkArrival(lat, lng, accuracy) {
+  if (!state.finishedAt || state.doneAt) return;
+  const d = metres([lat, lng], [dest().lat, dest().lng]);
+  const near = d <= HUNT.arriveMetres + Math.min(accuracy || 0, 60) / 2;
+  if (near && state.twistedAt) { navStop(); state.doneAt = Date.now(); save(); render(); return; }
+  if (near !== nearNow) { nearNow = near; if (near) navStop(); if (!document.querySelector(".screen.on")) render(); }
+}
 
 function fitAll() {
   if (!map) return;
@@ -1092,7 +1492,500 @@ async function startDetection() {
   startLoop();
 }
 $("retry").addEventListener("click", () => { $("retry").style.display = "none"; startDetection(); });
-$("back").addEventListener("click", () => render());
+$("back").addEventListener("click", () => { $("cam").classList.remove("finalMode"); render(); });
+
+/* ---------- The final photo and the hack ---------- */
+let endOnMap = false;
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+async function openFinalCamera() {
+  const say = (t) => { const m = $("finalMsg"); if (m) m.textContent = t; };
+  if (!navigator.mediaDevices?.getUserMedia) { say("Open this link in Safari (iPhone) or Chrome (Android) to use the camera."); return; }
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false });
+  } catch (e) {
+    say(e?.name === "NotAllowedError" ? "Camera access is blocked. Allow it in your browser settings, then reload." : "The camera didn't start. Try again.");
+    return;
+  }
+  video.srcObject = stream;
+  await video.play().catch(() => {});
+  resetSnap();
+  $("stage").style.transition = "none"; $("stage").style.transform = "none";
+  $("cam").classList.remove("celebrating");
+  $("cam").classList.add("finalMode");
+  setStatus("Frame the glass cube");
+  showScreen("cam");
+}
+$("shutter").addEventListener("click", () => {
+  if (!video.videoWidth) return;
+  const c = document.createElement("canvas"); c.width = video.videoWidth; c.height = video.videoHeight;
+  c.getContext("2d").drawImage(video, 0, 0);
+  stopCamera();
+  $("cam").classList.remove("finalMode");
+  state.hackedAt = Date.now(); save();
+  runHack(c);
+});
+
+/* Terminal helpers */
+function termLine(text, cls) {
+  const t = $("term"), d = document.createElement("div");
+  if (cls) d.className = cls;
+  d.textContent = text;
+  t.insertBefore(d, $("termCursor"));
+  while (t.children.length > 160) t.removeChild(t.firstChild);
+  t.scrollTop = t.scrollHeight;
+  return d;
+}
+const HEX = "0123456789abcdef";
+const hexRow = () => "0x" + Array.from({ length: 4 }, () => HEX[Math.random() * 16 | 0]).join("") + ":  " +
+  Array.from({ length: 8 }, () => HEX[Math.random() * 16 | 0] + HEX[Math.random() * 16 | 0]).join(" ");
+async function hexBurst(n, ms) { for (let k = 0; k < n; k++) { termLine(k === 3 ? "0x4b45:  4b 45 53 21 21 21 00 00   KES!!!" : hexRow(), "dim"); await sleep(ms); } }
+async function slowType(text, cls, ms) { const d = termLine("", cls); for (const ch of text) { d.textContent += ch; await sleep(ms); } return d; }
+async function bar(label, ms) {
+  const d = termLine("", "white");
+  for (let k = 0; k <= 20; k++) { d.textContent = `${label}  [${"█".repeat(k)}${"·".repeat(20 - k)}] ${k * 5}%`; await sleep(ms); }
+}
+function shotFor(k) {
+  const ch = HUNT.stops[k].char;
+  return state.shots.filter(s => s && s.c === ch).pop();
+}
+const STOP_IDS = ["BRYANT_PARK", "E_67TH_ST", "59E59_THEATER", "TIFFANY_CO", "HARRY_WINSTON"];
+
+/* Photo corruption on a canvas */
+function drawCover(ctx, img, W, H) {
+  const s = Math.max(W / img.width, H / img.height), w = img.width * s, h = img.height * s;
+  ctx.drawImage(img, (W - w) / 2, (H - h) / 2, w, h);
+}
+function corruptStep(cv, ctx, power) {
+  const W = cv.width, H = cv.height, R = (a, b) => a + Math.random() * (b - a);
+  ctx.globalCompositeOperation = "source-over";
+  for (let k = 0; k < 2 + power * 6; k++) {          /* tearing strips */
+    const y = R(0, H), h = R(4, 30 + 60 * power), dx = R(-1, 1) * (10 + 120 * power);
+    ctx.drawImage(cv, 0, y, W, h, dx, y, W, h);
+  }
+  if (Math.random() < .5 + power / 2) {               /* blocky pixelation */
+    const w = R(W * .1, W * .5), h = R(H * .05, H * .25), x = R(0, W - w), y = R(0, H - h), q = Math.max(4, 28 - power * 22 | 0);
+    const t = document.createElement("canvas"); t.width = Math.max(1, w / q); t.height = Math.max(1, h / q);
+    t.getContext("2d").drawImage(cv, x, y, w, h, 0, 0, t.width, t.height);
+    ctx.imageSmoothingEnabled = false; ctx.drawImage(t, 0, 0, t.width, t.height, x, y, w, h); ctx.imageSmoothingEnabled = true;
+  }
+  if (Math.random() < .35 + power / 2) {              /* smear a column sideways */
+    const x = R(0, W), y = R(0, H * .8), h = R(H * .1, H * .5);
+    ctx.drawImage(cv, x, y, 2, h, x, y, R(60, 260), h);
+  }
+  if (Math.random() < .3 + power / 3) {               /* neon color blocks */
+    ctx.globalCompositeOperation = "difference";
+    ctx.fillStyle = ["#3CFF7A", "#FF2D55", "#00E5FF", "#FFFFFF"][Math.random() * 4 | 0];
+    ctx.fillRect(R(0, W), R(0, H), R(20, W * .4), R(4, 40));
+    ctx.globalCompositeOperation = "source-over";
+  }
+  if (Math.random() < .25) {                          /* channel split */
+    ctx.globalAlpha = .35; ctx.globalCompositeOperation = "lighter";
+    ctx.drawImage(cv, R(-14, 14), 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = "source-over";
+  }
+}
+
+async function runHack(photo) {
+  const scr = $("hackScreen"), cv = $("hackCanvas"), ctx = cv.getContext("2d");
+  const dpr = Math.min(2, devicePixelRatio || 1), W = innerWidth, H = innerHeight;
+  cv.width = W * dpr; cv.height = H * dpr;
+  $("term").querySelectorAll("div").forEach(d => d.remove());
+  $("ransom").textContent = ""; $("ransom").classList.remove("on");
+  $("hackTiles").classList.remove("on");
+  scr.className = "screen";
+  showScreen("hackScreen");
+  const buzz = (p) => { if (navigator.vibrate) navigator.vibrate(p); };
+
+  /* 1. the calm before */
+  drawCover(ctx, photo, cv.width, cv.height);
+  scr.classList.add("flash", "saved");
+  await sleep(1100);
+  scr.classList.remove("flash", "saved");
+
+  /* 2. the crash: stutter, tear, black */
+  for (let k = 0; k < 7; k++) {
+    const y = Math.random() * cv.height, h = 20 + Math.random() * 200;
+    ctx.drawImage(cv, 0, y, cv.width, h, (Math.random() - .5) * 90, y, cv.width, h);
+    if (k % 3 === 0) { ctx.fillStyle = "rgba(0,0,0,.5)"; ctx.fillRect(0, 0, cv.width, cv.height); }
+    await sleep(90);
+  }
+  buzz(120);
+  ctx.fillStyle = "#000"; ctx.fillRect(0, 0, cv.width, cv.height);
+  scr.classList.add("term");
+  await sleep(1400);
+
+  /* 3. the terminal */
+  termLine("kes_hunt.app  fatal exception 0x00000767", "err");
+  await sleep(300);
+  await slowType("> BREACH DETECTED", "err", 35);
+  buzz([40, 30, 40]);
+  for (const [a, b] of [["> connecting to kes.phone", "OK"], ["> bypassing birthday_firewall", "OK"], ["> escalating privileges", "root"], ["> disabling fun.exe", "OK"]]) {
+    const d = termLine(a + " "); for (let k = 0; k < 10; k++) { d.textContent += "."; await sleep(22); } d.textContent += " " + b; await sleep(60);
+  }
+  await hexBurst(14, 18);
+  termLine("> reading hunt.log", "white");
+  for (let k = 0; k < HUNT.stops.length; k++) {
+    const sh = shotFor(k), when = sh ? new Date(sh.t).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "--:--";
+    const ll = sh ? `${sh.lat.toFixed(4)},${sh.lng.toFixed(4)}` : "??.????,??.????";
+    termLine(` [${when}] ${ll} ${STOP_IDS[k].padEnd(14)} ${HUNT.stops[k].char} ✓`);
+    await sleep(110);
+  }
+  termLine(`> distance walked: ${totalMiles().toFixed(1)} mi    time: ${fmt(elapsed())}`);
+  await hexBurst(10, 15);
+  const noise = ["> rerouting 14 satellites ... OK", "> compiling villain_monologue.c ... OK", "> warming up evil laugh ... ha", "> spoofing GPS ... nah, don't need to",
+    "> checking snack inventory ... low", "> cracking wrapping_paper.zip ... OK"];
+  for (const n of noise.slice(0, 3)) { termLine(n); await sleep(140); }
+  const dec = termLine("> decrypting code ......... ");
+  for (const ch of ["7", " 6", " 7", " 5", " T", " H"]) { dec.textContent += ch; await sleep(130); }
+  termLine("> resolving 767 5TH ... 767 FIFTH AVE, NY");
+  await sleep(250);
+  await slowType("> locating payload: birthday_gift.pkg", "white", 18);
+  await sleep(350);
+  termLine("  FOUND @ 767 FIFTH AVE", "err");
+  buzz([60, 40, 60]);
+  await sleep(300);
+  await bar("> initiating transfer", 45);
+  for (const n of noise.slice(3)) { termLine(n); await sleep(120); }
+  await hexBurst(18, 12);
+  termLine("> payload relocated ......... ██████████", "white");
+  termLine("> encrypting new location ... done");
+  await sleep(200);
+  termLine("> deleting evidence", "err");
+  for (let k = 0; k < 16; k++) { termLine(`  rm -rf /hunt/${["fun", "joy", "clues", "tiles", "map", "you"][k % 6]}_${(Math.random() * 9999 | 0)} ... ok`, "dim"); await sleep(28); }
+  buzz([30, 30, 30, 30, 200]);
+  await sleep(300);
+
+  /* 4. the corruption */
+  scr.classList.remove("term");
+  ctx.fillStyle = "#000"; ctx.fillRect(0, 0, cv.width, cv.height);
+  drawCover(ctx, photo, cv.width, cv.height);
+  const tiles = $("hackTiles"), from = HUNT.twist.from, junk = "#%&?!@$*01ABCDEFGHJKLMNPRSTUVWXYZ";
+  tiles.innerHTML = from.map(c => `<div class="slot filled">${c}</div>`).join("");
+  tiles.classList.add("on");
+  const t0 = performance.now();
+  while (performance.now() - t0 < 4200) {
+    const power = Math.min(1, (performance.now() - t0) / 4200);
+    if (!REDUCED) corruptStep(cv, ctx, power);
+    [...tiles.children].forEach((el, k) => el.textContent = Math.random() < .3 + power * .5 ? junk[Math.random() * junk.length | 0] : from[k]);
+    if (Math.random() < .08) buzz(25);
+    await sleep(60);
+  }
+  if (REDUCED) for (let k = 0; k < 30; k++) corruptStep(cv, ctx, .8);
+  [...tiles.children].forEach(el => el.textContent = "?");
+
+  /* 5. the ransom note */
+  const note = ["Hi Kes. Nice photo.", "", "I've taken your birthday gift. Good luck finding it.", "",
+    "In 30:00 I wrap it in so much bubble wrap you'll never get it open.", "", "Happy birthday,", "NULL"];
+  const box = $("ransom"); box.classList.add("on");
+  for (const line of note) {
+    for (const ch of line) { box.textContent += ch; await sleep(REDUCED ? 8 : 26); }
+    box.textContent += "\n"; await sleep(line ? 260 : 120);
+  }
+  await sleep(1800);
+  box.classList.remove("on"); $("hackTiles").classList.remove("on");
+
+  /* 6. counter-hack: three timed taps, then lock onto NULL */
+  await counterHack();
+
+  /* 7. recovery */
+  for (let k = 0; k < 3; k++) { scr.classList.add("whiteout"); await sleep(70); scr.classList.remove("whiteout"); await sleep(110); }
+  beginRescue();
+  showRecover(false);
+}
+
+/* ---------- Counter-hack: unfailable timed taps, then lock onto NULL ---------- */
+function gLog(text, cls) {
+  const l = $("gLog"), d = document.createElement("div");
+  if (cls) d.className = cls; d.textContent = text; l.appendChild(d);
+  while (l.children.length > 4) l.removeChild(l.firstChild);
+}
+function gFloat(x, y, text, cls) {
+  const f = document.createElement("div");
+  f.className = "gFloat " + (cls || ""); f.textContent = text;
+  f.style.left = x + "px"; f.style.top = y + "px";
+  $("gField").appendChild(f); setTimeout(() => f.remove(), 900);
+}
+function setAccess(pct) {
+  $("gBarFill").style.width = pct + "%";
+  $("gProg").textContent = `NULL ACCESS ${pct}%`;
+}
+const RING_MS = 1700;
+function nodeRound(fx, fy, label) {
+  return new Promise(resolve => {
+    const field = $("gField"), r = field.getBoundingClientRect();
+    const x = r.width * fx, y = r.height * fy;
+    const n = document.createElement("button");
+    n.className = "node"; n.setAttribute("aria-label", `Block ${label}`);
+    n.style.left = x + "px"; n.style.top = y + "px";
+    n.innerHTML = `<span class="ring"></span><span class="core"></span><span class="nLabel">${label}</span>`;
+    field.appendChild(n);
+    const start = performance.now();
+    let done = false;
+    const hit = (ev) => {
+      if (done) return;
+      ev.stopPropagation(); done = true;
+      /* how far the ring on screen has closed: 0 = wide open, 1 = on the node */
+      const anim = n.querySelector(".ring").getAnimations ? n.querySelector(".ring").getAnimations()[0] : null;
+      const ms = anim && anim.currentTime != null ? anim.currentTime : performance.now() - start;
+      const phase = (ms % RING_MS) / RING_MS;
+      const perfect = REDUCED || phase > .72;
+      n.classList.add("burst");
+      gFloat(x, y - 60, perfect ? "PERFECT" : "BLOCKED", perfect ? "good" : "");
+      if (navigator.vibrate) navigator.vibrate(perfect ? [30, 30, 60] : 50);
+      setTimeout(() => { n.remove(); field.onclick = null; resolve(); }, 450);
+    };
+    n.addEventListener("click", hit);
+    field.onclick = (ev) => {             /* a tap that misses the node: a nudge, never a penalty */
+      if (done) return;
+      const fr = field.getBoundingClientRect();
+      gFloat(ev.clientX - fr.left, ev.clientY - fr.top - 30, "closer", "dim");
+    };
+    setTimeout(() => n.focus({ preventScroll: true }), 50);
+  });
+}
+function lockOn() {
+  return new Promise(resolve => {
+    const field = $("gField"), r = field.getBoundingClientRect();
+    const radar = document.createElement("div"); radar.className = "radar";
+    const R = Math.min(r.width, r.height) * .42, cx = r.width / 2, cy = r.height * .5;
+    radar.style.width = radar.style.height = 2 * R + "px";
+    radar.style.left = cx - R + "px"; radar.style.top = cy - R + "px";
+    radar.innerHTML = `<span class="sweep"></span><span class="rr r1"></span><span class="rr r2"></span><span class="rr r3"></span><span class="cross h"></span><span class="cross v"></span>`;
+    field.appendChild(radar);
+    const blip = document.createElement("button");
+    blip.className = "blip"; blip.setAttribute("aria-label", "NULL's signal. Tap to lock on");
+    blip.innerHTML = `<span class="bDot"></span><span class="bTag">NULL</span>`;
+    field.appendChild(blip);
+    let speed = REDUCED ? 0 : 1, misses = 0, t = 0, last = performance.now(), raf = 0, done = false, bx = cx, by = cy;
+    const move = (now) => {
+      t += (now - last) / 1000 * speed; last = now;
+      bx = cx + Math.sin(t * 1.3) * R * .55 + Math.sin(t * 2.9) * R * .12;
+      by = cy + Math.sin(t * 1.7 + 1) * R * .5;
+      blip.style.left = bx + "px"; blip.style.top = by + "px";
+      if (!done) raf = requestAnimationFrame(move);
+    };
+    raf = requestAnimationFrame(move);
+    const lock = () => {
+      if (done) return; done = true; cancelAnimationFrame(raf);
+      field.onclick = null;
+      blip.classList.add("locked"); radar.classList.add("locked");
+      const ch = document.createElement("div"); ch.className = "crosshair";
+      ch.style.left = bx + "px"; ch.style.top = by + "px";
+      ch.innerHTML = `<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M8 30V8h22M70 8h22v22M92 70v22H70M30 92H8V70"/></svg>`;
+      field.appendChild(ch);
+      /* triangulation lines from three edges of the radar */
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("class", "tri"); svg.setAttribute("width", r.width); svg.setAttribute("height", r.height);
+      [[cx - R, cy + R * .2], [cx + R * .8, cy - R * .6], [cx + R * .3, cy + R * .95]].forEach(([x1, y1], k) => {
+        const l = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        l.setAttribute("x1", x1); l.setAttribute("y1", y1); l.setAttribute("x2", bx); l.setAttribute("y2", by);
+        l.style.animationDelay = (.35 + k * .2) + "s"; svg.appendChild(l);
+      });
+      field.appendChild(svg);
+      if (navigator.vibrate) navigator.vibrate([80, 50, 80, 50, 200]);
+      resolve();
+    };
+    blip.addEventListener("click", (ev) => { ev.stopPropagation(); lock(); });
+    field.onclick = (ev) => {
+      if (done) return;
+      if (misses >= 2) { lock(); return; }               /* after two misses, any tap locks on */
+      misses++; speed *= .45;
+      const fr = field.getBoundingClientRect();
+      gFloat(ev.clientX - fr.left, ev.clientY - fr.top - 30, misses === 2 ? "tap anywhere" : "closer", "dim");
+      $("gHint").textContent = misses === 2 ? "Signal weakening. Tap anywhere to lock on." : "Almost. NULL is slowing down.";
+    };
+    setTimeout(() => blip.focus({ preventScroll: true }), 50);
+  });
+}
+async function counterHack() {
+  const g = $("game");
+  $("gField").innerHTML = ""; $("gLog").innerHTML = "";
+  $("gTitle").textContent = "COUNTER-HACK";
+  $("gHint").textContent = "Tap each node as the ring closes on it.";
+  setAccess(100);
+  g.classList.add("on");
+  gLog("> hunt.app security online", "white");
+  await sleep(700);
+  const rounds = [[.28, .3, "PORT 7"], [.7, .52, "PORT 6"], [.38, .72, "PORT 5"]];
+  const access = [66, 33, 0];
+  const lines = ["> port 7 sealed", "> port 6 sealed", "> port 5 sealed. NULL locked out"];
+  const nullSays = ["NULL: hey. stop that.", "NULL: okay that one hurt.", "NULL: fine. I'm leaving anyway."];
+  for (let k = 0; k < rounds.length; k++) {
+    await nodeRound(...rounds[k]);
+    setAccess(access[k]);
+    gLog(lines[k]); gLog(nullSays[k], "err");
+    await sleep(450);
+  }
+  /* lock on */
+  $("gTitle").textContent = "TRACE NULL";
+  $("gHint").textContent = "NULL is escaping. Tap their signal to lock on.";
+  gLog("> NULL disconnecting...", "err");
+  await sleep(500);
+  await lockOn();
+  $("gTitle").textContent = "TARGET LOCKED";
+  $("gHint").textContent = "";
+  gLog("> triangulating", "white");
+  const coord = document.createElement("div"); coord.className = "gCoord"; $("game").appendChild(coord);
+  const real = "40.7548° N  73.9797° W", junk = "0123456789";
+  for (let k = 0; k < 18; k++) {
+    coord.textContent = [...real].map((c, i) => /\d/.test(c) && i >= k ? junk[Math.random() * 10 | 0] : c).join("");
+    await sleep(70);
+  }
+  coord.textContent = real;
+  await sleep(500);
+  const addr = document.createElement("div"); addr.className = "gAddr"; addr.textContent = "531 FIFTH AVE @ 44TH ST"; $("game").appendChild(addr);
+  gLog("> NULL located", "white");
+  if (navigator.vibrate) navigator.vibrate([60, 40, 120]);
+  await sleep(2200);
+  coord.remove(); addr.remove();
+  g.classList.remove("on");
+}
+
+/* The rescue starts: the timer and the new destination */
+function beginRescue() {
+  if (!state.twistedAt) {
+    state.twistedAt = Date.now();
+    state.rescueDeadline = state.twistedAt + 30 * 60 * 1000;
+    state.rescueFrom = lastPos ? [lastPos.lat, lastPos.lng] : [HUNT.final.lat, HUNT.final.lng];
+    state.taunts = {};
+    save();
+  }
+  clearDir();
+}
+function rescueLeft() { return state.rescueDeadline ? state.rescueDeadline - Date.now() : 0; }
+async function showRecover(instant) {
+  const T = HUNT.twist, tiles = $("rcTiles");
+  tiles.innerHTML = (instant ? T.to : T.from).map(c => `<div class="slot filled">${esc(c)}</div>`).join("");
+  $("rcGo").classList.toggle("wait", !instant);
+  updateRescueClock();
+  showScreen("recoverScreen");
+  if (instant) return;
+  await sleep(900);
+  const slots = [...tiles.children];
+  for (let k = 0; k < T.to.length; k++) {
+    if (T.to[k] === T.from[k]) continue;
+    slots[k].classList.add("flip"); await sleep(160);
+    slots[k].textContent = T.to[k];
+    slots[k].classList.remove("flip"); slots[k].classList.add("pop");
+    await sleep(260);
+  }
+  await sleep(400);
+  $("rcGo").classList.remove("wait");
+  $("rcGo").focus({ preventScroll: true });
+}
+function updateRescueClock() {
+  const left = rescueLeft(), txt = fmt(Math.max(0, left));
+  if ($("rcClock")) $("rcClock").textContent = txt;
+  const rescuing = state.twistedAt && !state.doneAt;
+  $("top").classList.toggle("urgent", !!(rescuing && left < 5 * 60 * 1000));
+  if (rescuing && state.rescueStarted) {
+    $("clock").textContent = left > 0 ? txt : "0:00";
+    if (left <= 0 && !state.taunts.timeout) taunt("timeout", "Okay, I'm bad at threats. It's still there. Go get it.");
+  }
+}
+$("rcGo").addEventListener("click", () => { state.rescueStarted = Date.now(); save(); render(); setTimeout(() => taunt("start", "I can see you on the map, you know."), 25000); });
+
+/* NULL's taunts along the way */
+let toastTimer = 0;
+function taunt(key, text) {
+  if (!state.twistedAt || state.doneAt || (state.taunts || {})[key]) return;
+  state.taunts = state.taunts || {}; state.taunts[key] = Date.now(); save();
+  const t = $("toast");
+  $("toastText").textContent = text;
+  t.classList.add("on");
+  if (navigator.vibrate) navigator.vibrate([40, 30, 40]);
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("on"), 7000);
+}
+$("toast").addEventListener("click", () => $("toast").classList.remove("on"));
+const TIFFANY = [40.76249, -73.97401];
+function checkTaunts(lat, lng) {
+  if (!state.rescueStarted || state.doneAt) return;
+  const bb = [HUNT.twist.lat, HUNT.twist.lng], d = metres([lat, lng], bb), d0 = metres(state.rescueFrom || [HUNT.final.lat, HUNT.final.lng], bb);
+  if (metres([lat, lng], TIFFANY) < 90) taunt("tiffany", "Tiffany's is right there. You could just give up and buy something.");
+  if (d <= d0 * .5) taunt("half", "You're walking pretty slow for a rescue mission.");
+  if (d <= 220) taunt("close", "Wait. How did you trace me?");
+}
+
+/* NULL on the map: always about 400 m ahead along the route, then waits at Best Buy */
+let thiefMarker = null, thiefPos = null, thiefTarget = null, thiefRaf = 0;
+function toXY(c, lat0) { return [c[0] * 111320 * Math.cos(lat0 * Math.PI / 180), c[1] * 110540]; }
+function routeInfo(C) {
+  const lat0 = C[0][1], P = C.map(c => toXY(c, lat0)), cum = [0];
+  for (let k = 1; k < P.length; k++) cum.push(cum[k - 1] + Math.hypot(P[k][0] - P[k - 1][0], P[k][1] - P[k - 1][1]));
+  return { lat0, P, cum, total: cum[cum.length - 1] };
+}
+function alongOf(R, C, pt) {
+  const q = toXY(pt, R.lat0); let best = Infinity, along = 0;
+  for (let k = 1; k < R.P.length; k++) {
+    const a = R.P[k - 1], b = R.P[k], vx = b[0] - a[0], vy = b[1] - a[1], L = vx * vx + vy * vy || 1;
+    const t = Math.max(0, Math.min(1, ((q[0] - a[0]) * vx + (q[1] - a[1]) * vy) / L));
+    const d = Math.hypot(a[0] + t * vx - q[0], a[1] + t * vy - q[1]);
+    if (d < best) { best = d; along = R.cum[k - 1] + t * Math.sqrt(L); }
+  }
+  return along;
+}
+function pointAt(R, C, along) {
+  for (let k = 1; k < C.length; k++) {
+    if (R.cum[k] >= along) {
+      const seg = R.cum[k] - R.cum[k - 1] || 1, t = (along - R.cum[k - 1]) / seg;
+      return [C[k - 1][0] + (C[k][0] - C[k - 1][0]) * t, C[k - 1][1] + (C[k][1] - C[k - 1][1]) * t];
+    }
+  }
+  return C[C.length - 1].slice();
+}
+let thiefWaiting = false;
+function updateThief() {
+  const on = !!(dirData && state.twistedAt && state.rescueStarted && !state.doneAt);
+  if (!on) { thiefTarget = null; if (thiefMarker) { thiefMarker.remove(); thiefMarker = null; thiefPos = null; } return; }
+  const C = dirData.coords, R = routeInfo(C);
+  const kes = lastPos ? alongOf(R, C, [lastPos.lng, lastPos.lat]) : 0;
+  const a = Math.min(R.total, kes + 400);
+  thiefTarget = pointAt(R, C, a);
+  thiefWaiting = a >= R.total - 1;
+  if (!map) return;
+  if (!thiefMarker) {
+    const el = document.createElement("div");
+    el.className = "thief"; el.setAttribute("aria-label", "NULL, the thief");
+    el.innerHTML = `<span class="tDot"></span>NULL`;
+    thiefPos = thiefTarget.slice();
+    thiefMarker = new maplibregl.Marker({ element: el, anchor: "bottom", offset: [0, -4] }).setLngLat(thiefPos).addTo(map);
+  }
+  thiefMarker.getElement().classList.toggle("waiting", thiefWaiting);
+  if (!thiefRaf) thiefRaf = requestAnimationFrame(stepThief);
+}
+function stepThief() {
+  thiefRaf = 0;
+  if (!thiefMarker || !thiefTarget) return;
+  const k = REDUCED ? 1 : .06;
+  thiefPos[0] += (thiefTarget[0] - thiefPos[0]) * k; thiefPos[1] += (thiefTarget[1] - thiefPos[1]) * k;
+  thiefMarker.setLngLat(thiefPos);
+  if (Math.abs(thiefTarget[0] - thiefPos[0]) + Math.abs(thiefTarget[1] - thiefPos[1]) > 1e-7) thiefRaf = requestAnimationFrame(stepThief);
+}
+
+/* Arriving at the gift */
+async function runRescued() {
+  const scr = $("hackScreen"), cv = $("hackCanvas"), ctx = cv.getContext("2d");
+  cv.width = innerWidth; cv.height = innerHeight; ctx.fillStyle = "#000"; ctx.fillRect(0, 0, cv.width, cv.height);
+  $("term").querySelectorAll("div").forEach(d => d.remove());
+  $("ransom").textContent = ""; $("ransom").classList.remove("on"); $("hackTiles").classList.remove("on"); $("game").classList.remove("on");
+  scr.className = "screen term";
+  $("toast").classList.remove("on");
+  showScreen("hackScreen");
+  if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+  await slowType("> signal recovered", "white", 30);
+  await sleep(300);
+  const d = termLine("> payload: birthday_gift.pkg "); for (let k = 0; k < 10; k++) { d.textContent += "."; await sleep(60); } d.textContent += " RESCUED ✓";
+  await sleep(500);
+  termLine("> NULL disconnected", "err");
+  await sleep(700);
+  const box = $("ransom"); box.classList.add("on");
+  for (const line of ["Fine. You win.", "", "Happy birthday, Kes.", "NULL"]) { for (const ch of line) { box.textContent += ch; await sleep(30); } box.textContent += "\n"; await sleep(300); }
+  await sleep(2200);
+  state.rescuedSeen = true; save();
+  render();
+}
+$("endMap").addEventListener("click", () => { endOnMap = true; render(); });
+
+
 
 function startLoop() {
   running = true; stable = 0;
