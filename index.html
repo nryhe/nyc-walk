@@ -247,6 +247,16 @@
   @keyframes shake { 0%,100% { transform: none } 25% { transform: translateX(-6px) } 75% { transform: translateX(6px) } }
   .links { display: flex; justify-content: center; gap: 24px; margin-top: -6px; }
 
+  /* Zoom */
+  video { transform-origin: 50% 50%; }
+  #freeze { position: absolute; inset: 0; width: 100%; height: 100%; display: none; }
+  #freeze.on { display: block; }
+  #cam { touch-action: none; }
+  .zoomChips { display: flex; gap: 6px; padding: 4px; border-radius: 999px; background: rgba(31,37,46,.55); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+  .zoomChips button { min-width: 44px; height: 36px; padding: 0 8px; border: 0; border-radius: 999px; background: none; color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; font-variant-numeric: tabular-nums; }
+  .zoomChips button[aria-pressed="true"] { background: rgba(255,255,255,.22); color: #FFD60A; font-size: 14px; }
+  #cam.celebrating .zoomChips { opacity: 0; pointer-events: none; }
+
   /* Final photo */
   #shutter { display: none; width: 76px; height: 76px; border-radius: 50%; border: 4px solid #fff; background: none; padding: 5px; cursor: pointer; }
   #shutter span { display: block; width: 100%; height: 100%; border-radius: 50%; background: #fff; transition: transform .1s; }
@@ -377,6 +387,15 @@
   #progList li b { flex: none; min-width: 28px; height: 34px; padding: 0 6px; border-radius: 6px; background: var(--cream); color: var(--ink); display: flex; align-items: center; justify-content: center; }
   #progDlg .stack { display: flex; flex-direction: column; gap: 4px; margin-top: 20px; }
 
+  /* Share image */
+  #cardDlg { border: 0; border-radius: 20px; padding: 16px; width: min(92vw, 420px); max-height: 92vh; color: var(--text); background: var(--surface); }
+  #cardDlg::backdrop { background: rgba(31,37,46,.6); }
+  #cardImg { display: block; width: 100%; max-height: 62vh; object-fit: contain; border-radius: 12px; background: var(--ink); aspect-ratio: 9 / 16; }
+  #cardMsg { font-size: 15px; color: var(--muted); text-align: center; margin: 4px 0 10px; }
+  #cardMsg:empty { display: none; }
+  #cardDlg .stack { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+  .build { font-size: 11px; color: var(--muted); text-align: center; margin-top: 8px; }
+
   /* Confirm */
   #confirmDlg { border: 0; border-radius: 20px; padding: 24px; width: min(88vw, 360px); color: var(--text); background: var(--surface); }
   #confirmDlg::backdrop { background: rgba(31,37,46,.5); }
@@ -458,6 +477,7 @@
       <button class="btn" id="startBtn"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span>Allow location and start</span></button>
       <button class="link center" id="skipLoc" style="display:none;margin-top:-12px">Start without location</button>
       <p class="fine">Your location draws your route. It stays on your phone.</p>
+      <p class="build" id="buildB" style="margin-top:-12px"></p>
       <div class="dots" aria-hidden="true"><span></span><span></span><span class="on"></span></div>
     </div>
   </div>
@@ -466,6 +486,7 @@
 <section id="cam" class="screen dark" aria-label="Camera">
   <div id="stage">
     <video id="video" playsinline muted autoplay></video>
+    <canvas id="freeze"></canvas>
     <canvas id="live"></canvas>
     <div id="guide" aria-hidden="true"></div>
     <div id="snap" aria-hidden="true"></div>
@@ -478,6 +499,9 @@
     <div class="camTools">
       <button class="glass chip" id="retry" style="display:none">Retry</button>
       <button class="glass chip" id="guideBtn" hidden>Hide guide</button>
+    </div>
+    <div class="zoomChips" id="zoomChips" role="group" aria-label="Zoom">
+      <button data-z="1" aria-pressed="true">1×</button><button data-z="2" aria-pressed="false">2×</button><button data-z="3" aria-pressed="false">3×</button>
     </div>
     <div class="pill" aria-live="polite"><span class="dot"></span><span id="status">Line it up with the outline</span></div>
     <button class="typeLink" id="typeIt">Can't get it? Type the answer</button>
@@ -521,7 +545,7 @@
 <section id="recoverScreen" class="screen intro" aria-label="Rescue your gift">
   <div class="inner rcInner">
     <p class="rcKicker">Signal locked. NULL tracked.</p>
-    <div class="tiles" id="rcTiles" aria-label="New code: 5, 3, 1, 5, T, H"></div>
+    <div class="tiles" id="rcTiles" aria-label="Your code: 7, 6, 7, 5, T, H"></div>
     <h1 class="introTitle" style="margin:0">Rescue your gift</h1>
     <p class="rcText">NULL is heading to 531 Fifth Avenue, down Fifth at 44th Street. Get your gift back before the timer runs out.</p>
     <div class="rcClock" id="rcClock" aria-label="Time left">30:00</div>
@@ -534,11 +558,12 @@
 <section id="endScreen" class="screen intro" aria-label="Happy birthday">
   <div class="fw" aria-hidden="true"><div class="b" style="left:28%;top:42%"><span class="kes-f" style="animation-delay:0s"></span><span class="kes-p" style="--dx:78px;--dy:0px;animation-delay:0s">🎉</span><span class="kes-p" style="--dx:55px;--dy:55px;animation-delay:0s">🎂</span><span class="kes-p" style="--dx:0px;--dy:78px;animation-delay:0s">🎈</span><span class="kes-p" style="--dx:-55px;--dy:55px;animation-delay:0s">✨</span><span class="kes-p" style="--dx:-78px;--dy:0px;animation-delay:0s">🎁</span><span class="kes-p" style="--dx:-55px;--dy:-55px;animation-delay:0s">🥳</span><span class="kes-p" style="--dx:0px;--dy:-78px;animation-delay:0s">🎊</span><span class="kes-p" style="--dx:55px;--dy:-55px;animation-delay:0s">⭐</span></div><div class="b" style="left:73%;top:30%"><span class="kes-f" style="animation-delay:0.9s"></span><span class="kes-p" style="--dx:78px;--dy:0px;animation-delay:0.9s">✨</span><span class="kes-p" style="--dx:55px;--dy:55px;animation-delay:0.9s">🎁</span><span class="kes-p" style="--dx:0px;--dy:78px;animation-delay:0.9s">🥳</span><span class="kes-p" style="--dx:-55px;--dy:55px;animation-delay:0.9s">🎊</span><span class="kes-p" style="--dx:-78px;--dy:0px;animation-delay:0.9s">⭐</span><span class="kes-p" style="--dx:-55px;--dy:-55px;animation-delay:0.9s">🎉</span><span class="kes-p" style="--dx:0px;--dy:-78px;animation-delay:0.9s">🎂</span><span class="kes-p" style="--dx:55px;--dy:-55px;animation-delay:0.9s">🎈</span></div><div class="b" style="left:54%;top:70%"><span class="kes-f" style="animation-delay:1.8s"></span><span class="kes-p" style="--dx:78px;--dy:0px;animation-delay:1.8s">🥳</span><span class="kes-p" style="--dx:55px;--dy:55px;animation-delay:1.8s">🎊</span><span class="kes-p" style="--dx:0px;--dy:78px;animation-delay:1.8s">⭐</span><span class="kes-p" style="--dx:-55px;--dy:55px;animation-delay:1.8s">🎉</span><span class="kes-p" style="--dx:-78px;--dy:0px;animation-delay:1.8s">🎂</span><span class="kes-p" style="--dx:-55px;--dy:-55px;animation-delay:1.8s">🎈</span><span class="kes-p" style="--dx:0px;--dy:-78px;animation-delay:1.8s">✨</span><span class="kes-p" style="--dx:55px;--dy:-55px;animation-delay:1.8s">🎁</span></div></div>
   <div class="inner">
-    <div class="introTiles end" aria-label="5, 3, 1, 5, T, H"><span>5</span><span>3</span><span>1</span><span>5</span><span>T</span><span>H</span></div>
+    <div class="introTiles end" aria-label="Your code: 7, 6, 7, 5, T, H"><span>7</span><span>6</span><span>7</span><span>5</span><span>T</span><span>H</span></div>
     <div class="bday"><h1>Happy birthday, Kes!</h1><p>Your gift is waiting at the Order Pickup counter inside. Bring your ID.</p></div>
     <div class="introFoot">
       <div class="stats endStats" id="endStats"></div>
-      <button class="btn light" id="endMap">See your whole route</button>
+      <button class="btn light" id="endShare"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>Share your hunt</button>
+      <button class="link center" id="endMap" style="color:var(--cream);margin-top:-12px">See your whole route</button>
     </div>
   </div>
 </section>
@@ -548,6 +573,17 @@
   <div class="tiles" id="progTiles"></div>
   <div id="progList"></div>
   <div class="stack"><button class="btn" id="pgClose">Back to the clue</button><button class="link quiet" id="pgRestart">Start over</button></div>
+  <p class="build" id="buildA"></p>
+</dialog>
+
+<dialog id="cardDlg" aria-label="Share your hunt">
+  <p id="cardMsg" aria-live="polite"></p>
+  <img id="cardImg" alt="Your hunt: the route map, the time at each stop, and your total time and distance">
+  <div class="stack">
+    <button class="btn" id="cardShare"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>Share</button>
+    <button class="btn secondary" id="cardSave">Save image</button>
+    <button class="link quiet" id="cardClose">Close</button>
+  </div>
 </dialog>
 
 <dialog id="confirmDlg" aria-labelledby="cfTitle">
@@ -624,7 +660,7 @@ const HUNT = {
   final: { name: "767 Fifth Avenue", short: "767 5th", lat: 40.76384, lng: -73.97285, address: "767 5th Ave, New York, NY 10153" },
   /* After the final photo at 767 Fifth, the code "glitches" and reroutes Kes to the gift */
   twist: { name: "Best Buy, 531 Fifth Avenue", short: "531 5th", lat: 40.75484, lng: -73.97968, address: "531 5th Ave, New York, NY 10017",
-           from: ["7", "6", "7", "5", "T", "H"], to: ["5", "3", "1", "5", "T", "H"] },
+           from: ["7", "6", "7", "5", "T", "H"], to: ["7", "6", "7", "5", "T", "H"] },
   arriveMetres: 80,
   nudges: ["Read it as a number and a street.", "You're standing on that street right now.", "Walk north. Look for glass."]
 };
@@ -659,7 +695,7 @@ const asLine = (coords) => coords.length > 1
 function initMap() {
   if (!window.maplibregl) return;
   try {
-    map = new maplibregl.Map({ container: "map", style: MAP_STYLE, center: START_VIEW, zoom: 15, attributionControl: { compact: true }, pitchWithRotate: false });
+    map = new maplibregl.Map({ preserveDrawingBuffer: true, container: "map", style: MAP_STYLE, center: START_VIEW, zoom: 15, attributionControl: { compact: true }, pitchWithRotate: false });
   } catch (e) { map = null; return; }
   map.on("load", () => {
     map.addSource("path", { type: "geojson", data: asLine([]) });
@@ -951,10 +987,12 @@ function render(popIndex) {
           <div class="tiles finTiles">${tiles(HUNT.twist.to)}</div>
           <h1 class="finQ">Happy birthday, Kes!</h1>
           <div class="stats">${$("endStats").innerHTML}</div>
+          <button class="btn" id="endShare2"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>Share your hunt</button>
           <button class="link center" id="endBack">Back to the celebration</button>
           <button class="link quiet" id="restartBtn">Start over</button>
         </div>`;
       $("endBack").onclick = () => { endOnMap = false; render(); };
+      $("endShare2").onclick = openShareCard;
       $("restartBtn").onclick = askStartOver;
       showScreen(null); fitAll(); return;
     }
@@ -1037,6 +1075,170 @@ function render(popIndex) {
   showScreen(null);
   if (s.ref) loadCv().catch(() => {});
 }
+
+/* ---------- The shareable end image ---------- */
+const BUILD = "Oct 5, build 16";
+const PLACES = [
+  { name: "Bryant Park", ll: [40.75337, -73.98123] },
+  { name: "East 67th Street", ll: [40.76840, -73.97060] },
+  { name: "59E59 Theaters", ll: [40.76369, -73.97109] },
+  { name: "Tiffany & Co.", ll: [40.76249, -73.97401] },
+  { name: "Harry Winston", ll: [40.76199, -73.97437] }
+];
+function timeline() {
+  const rows = [{ kind: "start", name: "Started the hunt", t: state.startedAt }];
+  HUNT.stops.forEach((s, k) => {
+    const sh = state.shots[k];
+    rows.push({ kind: "stop", char: s.char, name: PLACES[k].name, t: (state.foundAt || [])[k] || (sh && sh.t), ll: sh ? [sh.lat, sh.lng] : PLACES[k].ll });
+  });
+  rows.push({ kind: "apple", char: "", name: "Apple Fifth Avenue", t: state.hackedAt, ll: [HUNT.final.lat, HUNT.final.lng] });
+  rows.push({ kind: "gift", char: "", name: "Gift rescued from NULL", t: state.doneAt, ll: [HUNT.twist.lat, HUNT.twist.lng] });
+  return rows;
+}
+const clockTime = (t) => t ? new Date(t).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "";
+function legText(ms) { if (!ms || ms < 0) return ""; const m = Math.round(ms / 60000); return m < 60 ? `+${m} min` : `+${Math.floor(m / 60)} h ${m % 60} min`; }
+
+async function snapMap(w, h, rows) {
+  if (!map || !mapReady) return null;
+  const pts = state.path.map(p => [p[1], p[0]]).concat(rows.filter(r => r.ll).map(r => [r.ll[1], r.ll[0]]));
+  if (pts.length < 2) return null;
+  const W = map.getContainer().clientWidth, H = map.getContainer().clientHeight;
+  let cw = W - 30, ch = cw * h / w; if (ch > H - 60) { ch = H - 60; cw = ch * w / h; }
+  const b = new maplibregl.LngLatBounds(pts[0], pts[0]); pts.forEach(p => b.extend(p));
+  const hadDir = mapReady && map.getSource("dir");
+  if (hadDir) { map.getSource("dir").setData(asLine([])); map.getSource("dirDone").setData(asLine([])); }
+  map.jumpTo({ bearing: 0, pitch: 0 });
+  map.fitBounds(b, { padding: { top: (H - ch) / 2 + 40, bottom: (H - ch) / 2 + 40, left: (W - cw) / 2 + 40, right: (W - cw) / 2 + 40 }, duration: 0, maxZoom: 16.5 });
+  await new Promise(r => { let done = false; map.once("idle", () => { done = true; r(); }); setTimeout(() => { if (!done) r(); }, 6000); });
+  const src = map.getCanvas(), dpr = src.width / W;
+  const out = document.createElement("canvas"); out.width = w; out.height = h;
+  out.getContext("2d").drawImage(src, (W - cw) / 2 * dpr, (H - ch) / 2 * dpr, cw * dpr, ch * dpr, 0, 0, w, h);
+  try { out.getContext("2d").getImageData(0, 0, 1, 1); } catch (e) { return null; }     /* blocked map tiles: draw our own */
+  const proj = (ll) => { const p = map.project([ll[1], ll[0]]); return [(p.x - (W - cw) / 2) * w / cw, (p.y - (H - ch) / 2) * h / ch]; };
+  return { img: out, proj };
+}
+function plainMap(w, h, rows) {
+  /* no map tiles: the walked route on a plain fog background */
+  const pts = state.path.map(p => [p[0], p[1]]).concat(rows.filter(r => r.ll).map(r => r.ll));
+  const lat0 = pts.reduce((a, p) => a + p[0], 0) / pts.length, kx = Math.cos(lat0 * Math.PI / 180);
+  const xs = pts.map(p => p[1] * kx), ys = pts.map(p => -p[0]);
+  const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+  const sc = Math.min((w - 140) / (maxX - minX || 1e-4), (h - 140) / (maxY - minY || 1e-4));
+  const ox = (w - (maxX - minX) * sc) / 2, oy = (h - (maxY - minY) * sc) / 2;
+  const proj = (ll) => [ox + (ll[1] * kx - minX) * sc, oy + (-ll[0] - minY) * sc];
+  const c = document.createElement("canvas"); c.width = w; c.height = h;
+  const g = c.getContext("2d"); g.fillStyle = "#E3E4E6"; g.fillRect(0, 0, w, h);
+  if (state.path.length > 1) {
+    g.strokeStyle = "#2E3642"; g.lineWidth = 8; g.lineJoin = g.lineCap = "round"; g.beginPath();
+    state.path.forEach((p, k) => { const [x, y] = proj(p); k ? g.lineTo(x, y) : g.moveTo(x, y); }); g.stroke();
+  }
+  return { img: c, proj };
+}
+function roundRect(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+
+async function makeShareCard() {
+  const W = 1080, H = 1920, F = '"Helvetica Neue", Helvetica, Arial, sans-serif';
+  const INK = "#2E3642", CREAM = "#F0E4D3", MIST = "#C8D8E0";
+  const rows = timeline();
+  const c = document.createElement("canvas"); c.width = W; c.height = H;
+  const g = c.getContext("2d");
+  g.fillStyle = INK; g.fillRect(0, 0, W, H);
+  /* title */
+  g.textAlign = "center"; g.fillStyle = MIST; g.font = `700 34px ${F}`;
+  g.fillText("KES'S BIRTHDAY SCAVENGER HUNT", W / 2, 110);
+  g.fillStyle = CREAM; g.font = `400 30px ${F}`;
+  g.fillText(new Date(state.startedAt || Date.now()).toLocaleDateString([], { weekday: "long", month: "long", day: "numeric", year: "numeric" }), W / 2, 160);
+  /* the code */
+  const code = HUNT.twist.from, tw = 112, th = 140, gap = 16, tx0 = (W - (code.length * tw + (code.length - 1) * gap)) / 2;
+  code.forEach((ch, k) => {
+    const x = tx0 + k * (tw + gap); g.fillStyle = CREAM; roundRect(g, x, 205, tw, th, 14); g.fill();
+    g.fillStyle = INK; g.font = `700 82px ${F}`; g.textBaseline = "middle"; g.fillText(ch, x + tw / 2, 205 + th / 2 + 4); g.textBaseline = "alphabetic";
+  });
+  /* the map */
+  const mx = 60, my = 400, mw = 960, mh = 840;
+  const m = (await snapMap(mw, mh, rows)) || plainMap(mw, mh, rows);
+  g.save(); roundRect(g, mx, my, mw, mh, 28); g.clip(); g.drawImage(m.img, mx, my); g.restore();
+  /* markers: step aside when they'd overlap, with a thin line to the real spot */
+  const placed = [];
+  const hits = (x, y, w, h) => placed.some(q => x < q.x + q.w + 6 && x + w + 6 > q.x && y < q.y + q.h + 6 && y + h + 6 > q.y);
+  rows.forEach((r) => {
+    if (!r.ll) return;
+    let [px, py] = m.proj(r.ll); px += mx; py += my;
+    if (px < mx || px > mx + mw || py < my || py > my + mh) return;
+    const label = r.kind === "stop" ? r.char : r.kind === "apple" ? "767 5th" : "NULL";
+    g.font = `700 ${r.kind === "stop" ? 32 : 26}px ${r.kind === "gift" ? "ui-monospace, Menlo, monospace" : F}`;
+    const bw = Math.max(52, g.measureText(label).width + 28), bh = 52;
+    let x = px, y = py;
+    const tries = [[0, 0], [70, 0], [-70, 0], [0, -66], [0, 66], [80, -60], [-80, -60], [80, 60], [-80, 60], [140, 0], [-140, 0]];
+    for (const [dx, dy] of tries) {
+      const cx = Math.min(mx + mw - bw / 2 - 8, Math.max(mx + bw / 2 + 8, px + dx)), cy = Math.min(my + mh - bh / 2 - 8, Math.max(my + bh / 2 + 8, py + dy));
+      if (!hits(cx - bw / 2, cy - bh / 2, bw, bh)) { x = cx; y = cy; break; }
+    }
+    placed.push({ x: x - bw / 2, y: y - bh / 2, w: bw, h: bh });
+    if (x !== px || y !== py) {
+      g.strokeStyle = INK; g.lineWidth = 3; g.beginPath(); g.moveTo(px, py); g.lineTo(x, y); g.stroke();
+      g.fillStyle = INK; g.beginPath(); g.arc(px, py, 7, 0, Math.PI * 2); g.fill();
+    }
+    g.fillStyle = r.kind === "gift" ? "#000" : r.kind === "apple" ? INK : CREAM;
+    g.strokeStyle = r.kind === "gift" ? "#3CFF7A" : r.kind === "apple" ? "#FFFFFF" : INK; g.lineWidth = 4;
+    roundRect(g, x - bw / 2, y - bh / 2, bw, bh, 14); g.fill(); g.stroke();
+    g.fillStyle = r.kind === "gift" ? "#3CFF7A" : r.kind === "apple" ? CREAM : INK;
+    g.textBaseline = "middle"; g.fillText(label, x, y + 2); g.textBaseline = "alphabetic";
+  });
+  /* the timeline */
+  let y = 1310; const rowH = 60;
+  g.textAlign = "left";
+  rows.forEach((r, k) => {
+    const prev = rows[k - 1];
+    g.fillStyle = r.kind === "gift" ? "#000" : CREAM; roundRect(g, 60, y - 40, 52, 52, 10); g.fill();
+    if (r.kind === "gift") { g.strokeStyle = "#3CFF7A"; g.lineWidth = 3; g.stroke(); }
+    g.fillStyle = r.kind === "gift" ? "#3CFF7A" : INK; g.textAlign = "center"; g.font = `700 ${r.char && r.char.length > 1 ? 24 : 30}px ${F}`;
+    g.fillText(r.kind === "start" ? "▶" : r.kind === "apple" ? "◆" : r.kind === "gift" ? "✓" : r.char, 86, y - 3);
+    g.textAlign = "left"; g.fillStyle = CREAM; g.font = `700 34px ${F}`; g.fillText(r.name, 136, y);
+    g.textAlign = "right"; g.font = `400 30px ${F}`; g.fillStyle = MIST;
+    g.fillText(clockTime(r.t), W - 60, y);
+    const leg = prev && r.t && prev.t ? legText(r.t - prev.t) : "";
+    if (leg) { g.fillStyle = "#8B98A6"; g.font = `400 26px ${F}`; g.fillText(leg, W - 210, y); }
+    y += rowH;
+  });
+  /* totals */
+  g.textAlign = "center"; g.fillStyle = CREAM; g.font = `700 40px ${F}`;
+  g.fillText(`${fmt(totalTime())}  ·  ${totalMiles().toFixed(1)} mi`, W / 2, 1838);
+  g.fillStyle = "#3CFF7A"; g.font = `700 24px ui-monospace, Menlo, monospace`;
+  g.fillText("> NULL DEFEATED", W / 2, 1880);
+  if (map) setTimeout(() => { drawDir(); fitAll(); }, 50);
+  return c;
+}
+let shareBlob = null;
+async function openShareCard() {
+  const d = $("cardDlg"), img = $("cardImg");
+  $("cardMsg").textContent = "Making your image…";
+  img.removeAttribute("src"); $("cardShare").disabled = true; $("cardSave").disabled = true;
+  if (d.showModal) d.showModal();
+  try {
+    const cv = await makeShareCard();
+    shareBlob = await new Promise(r => cv.toBlob(r, "image/png"));
+    img.src = URL.createObjectURL(shareBlob);
+    $("cardMsg").textContent = "";
+    const file = new File([shareBlob], "kes-birthday-hunt.png", { type: "image/png" });
+    $("cardShare").style.display = navigator.canShare && navigator.canShare({ files: [file] }) ? "" : "none";
+    $("cardShare").disabled = false; $("cardSave").disabled = false;
+  } catch (e) { $("cardMsg").textContent = "Couldn't make the image. Try again."; }
+}
+$("cardShare").addEventListener("click", async () => {
+  if (!shareBlob) return;
+  try { await navigator.share({ files: [new File([shareBlob], "kes-birthday-hunt.png", { type: "image/png" })], title: "Kes's birthday scavenger hunt" }); } catch (e) {}
+});
+$("cardSave").addEventListener("click", () => {
+  if (!shareBlob) return;
+  const a = document.createElement("a"); a.href = URL.createObjectURL(shareBlob); a.download = "kes-birthday-hunt.png";
+  document.body.appendChild(a); a.click(); a.remove();
+});
+$("cardClose").addEventListener("click", () => $("cardDlg").close());
+$("endShare").addEventListener("click", openShareCard);
+
+$("buildA").textContent = $("buildB").textContent = "Version: " + BUILD;
+console.log("Kes's hunt, version " + BUILD);
 
 /* ---------- Opening screens ---------- */
 function goIntro(n) {
@@ -1468,6 +1670,7 @@ async function openCamera() {
   resetSnap();
   $("cam").classList.remove("celebrating");
   $("stage").style.transition = "none"; $("stage").style.transform = "none";
+  $("freeze").classList.remove("on"); setZoom(1);
   $("guide").style.width = s.guideW || "";
   guideOn = true; $("guide").classList.remove("off"); $("guideBtn").textContent = "Hide guide";
   placeGuideTip();
@@ -1510,6 +1713,7 @@ async function openFinalCamera() {
   await video.play().catch(() => {});
   resetSnap();
   $("stage").style.transition = "none"; $("stage").style.transform = "none";
+  $("freeze").classList.remove("on"); setZoom(1);
   $("cam").classList.remove("celebrating");
   $("cam").classList.add("finalMode");
   setStatus("Frame the glass cube");
@@ -1517,8 +1721,7 @@ async function openFinalCamera() {
 }
 $("shutter").addEventListener("click", () => {
   if (!video.videoWidth) return;
-  const c = document.createElement("canvas"); c.width = video.videoWidth; c.height = video.videoHeight;
-  c.getContext("2d").drawImage(video, 0, 0);
+  const c = grabFrame(document.createElement("canvas"));
   stopCamera();
   $("cam").classList.remove("finalMode");
   state.hackedAt = Date.now(); save();
@@ -1993,24 +2196,39 @@ function startLoop() {
   tick();
 }
 function stopLoop() { running = false; clearTimeout(timer); }
+/* Camera image -> screen, including digital zoom around the screen's center */
+let camZoom = 1;
+const frameBuf = document.createElement("canvas");
 function coverMap() {
   const W = live.clientWidth, H = live.clientHeight, vw = video.videoWidth, vh = video.videoHeight, sc = Math.max(W / vw, H / vh);
-  return { s: sc, ox: (W - vw * sc) / 2, oy: (H - vh * sc) / 2 };
+  const ox = (W - vw * sc) / 2, oy = (H - vh * sc) / 2, z = camZoom;
+  return { s: sc * z, ox: W / 2 + (ox - W / 2) * z, oy: H / 2 + (oy - H / 2) * z, W, H };
+}
+/* The part of the camera image that's on screen, at full camera resolution */
+function grabFrame(target) {
+  const m = coverMap(), c = { x: -m.ox / m.s, y: -m.oy / m.s, w: m.W / m.s, h: m.H / m.s };
+  const k = Math.min(1, 1920 / c.w);
+  target.width = Math.max(1, Math.round(c.w * k)); target.height = Math.max(1, Math.round(c.h * k));
+  target.getContext("2d").drawImage(video, c.x, c.y, c.w, c.h, 0, 0, target.width, target.height);
+  return target;
 }
 function analyse() {
-  const vw = video.videoWidth, vh = video.videoHeight;
-  if (!vw) return;
-  const p = PROC_W / vw;
-  proc.width = PROC_W; proc.height = Math.round(vh * p);
-  pctx.drawImage(video, 0, 0, proc.width, proc.height);
+  if (!video.videoWidth) return;
+  grabFrame(frameBuf);
+  const ps = PROC_W / frameBuf.width;
+  proc.width = PROC_W; proc.height = Math.round(frameBuf.height * ps);
+  pctx.drawImage(frameBuf, 0, 0, proc.width, proc.height);
   const dpr = window.devicePixelRatio || 1;
   if (live.width !== live.clientWidth * dpr) { live.width = live.clientWidth * dpr; live.height = live.clientHeight * dpr; }
   lctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   lctx.clearRect(0, 0, live.clientWidth, live.clientHeight);
   const r = detect(HUNT.stops[state.i], proc);
   if (r) {
+    r.ps = ps;
+    r.hf = mul3([1 / ps, 0, 0, 0, 1 / ps, 0, 0, 0, 1], r.hm);       /* reference photo -> frame pixels */
     stable++; missCount = 0; lastFound = r;
-    snapTo(r.hm, p);
+    const k = live.clientWidth / frameBuf.width;                      /* the frame fills the screen */
+    snapTo(mul3([k, 0, 0, 0, k, 0, 0, 0, 1], r.hf));
     $("guide").classList.add("off");
     setStatus("Hold still…");
     if (stable >= STABLE_FRAMES) celebrate();
@@ -2022,6 +2240,37 @@ function analyse() {
     }
   }
 }
+
+/* ---------- Zoom: buttons and pinch ---------- */
+function setZoom(z) {
+  z = Math.max(1, Math.min(5, z));
+  const ratio = z / camZoom, W = live.clientWidth / 2, H = live.clientHeight / 2;
+  const scaleQuad = (q) => q && q.forEach((v, n) => { q[n] = (n % 2 ? H : W) + (v - (n % 2 ? H : W)) * ratio; });
+  scaleQuad(snapCur); scaleQuad(snapTarget);
+  if (snapCur) applySnap();
+  camZoom = z;
+  video.style.transform = z === 1 ? "" : `scale(${z})`;
+  stable = 0;
+  const near = [1, 2, 3].reduce((a, b) => Math.abs(b - z) < Math.abs(a - z) ? b : a);
+  $("zoomChips").querySelectorAll("button").forEach(b => {
+    const v = +b.dataset.z, on = v === near;
+    b.setAttribute("aria-pressed", String(on));
+    b.textContent = on && Math.abs(z - v) > .05 ? `${z.toFixed(1)}×` : `${v}×`;
+  });
+}
+$("zoomChips").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) setZoom(+b.dataset.z); });
+let pinch = null;
+$("cam").addEventListener("touchstart", (e) => {
+  if (e.touches.length === 2 && !$("cam").classList.contains("celebrating")) {
+    const [a, b] = e.touches; pinch = { d: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY), z: camZoom };
+  }
+}, { passive: true });
+$("cam").addEventListener("touchmove", (e) => {
+  if (!pinch || e.touches.length !== 2) return;
+  e.preventDefault();
+  const [a, b] = e.touches; setZoom(pinch.z * Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY) / pinch.d);
+}, { passive: false });
+$("cam").addEventListener("touchend", (e) => { if (e.touches.length < 2) pinch = null; });
 
 /* ---------- Outline that locks onto the real object ---------- */
 function mul3(A, B) {
@@ -2055,13 +2304,13 @@ function applySnap() {
 function snapLoop(now) {
   if (!snapCur || !snapTarget) { snapRaf = 0; return; }
   const dt = Math.min(64, now - (snapT || now)); snapT = now;
-  const k = REDUCED ? 1 : 1 - Math.pow(0.8, dt / 16.7);
+  const k = REDUCED ? 1 : 1 - Math.pow(0.62, dt / 16.7);
   for (let n = 0; n < 8; n++) snapCur[n] += (snapTarget[n] - snapCur[n]) * k;
   applySnap();
   snapRaf = requestAnimationFrame(snapLoop);
 }
 const REDUCED = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
-function snapTo(hm, p) {
+function snapTo(T) {
   const s = HUNT.stops[state.i];
   if (!s.guide) return;
   const box = $("snap");
@@ -2071,8 +2320,6 @@ function snapTo(hm, p) {
     svg.setAttribute("width", vb.width); svg.setAttribute("height", vb.height);
     box.dataset.stop = String(state.i);
   }
-  const m = coverMap(), kk = m.s / p;
-  const T = mul3([kk, 0, m.ox, 0, kk, m.oy, 0, 0, 1], hm);           /* reference photo -> screen */
   const [w, h] = snapSize();
   snapTarget = [].concat(project(T, 0, 0), project(T, w, 0), project(T, w, h), project(T, 0, h));
   clearTimeout(snapHideTimer);
@@ -2190,11 +2437,20 @@ let zoomCss = "none", ringScreen = null;
 async function celebrate() {
   stopLoop();
   const s = HUNT.stops[state.i], cam = $("cam");
+  const fz = $("freeze");
+  fz.width = frameBuf.width; fz.height = frameBuf.height;
+  fz.getContext("2d").drawImage(frameBuf, 0, 0);
+  fz.classList.add("on");
   try { video.pause(); } catch (e) {}
   if (navigator.vibrate) navigator.vibrate(40);
   cam.classList.add("celebrating");
   setStatus("Found it!");
-  await wait(250);                       /* let the outline settle */
+  /* the outline glides the last few pixels onto the frozen frame instead of jumping */
+  for (let t = 0; t < 30 && snapCur && snapTarget; t++) {
+    let d = 0; for (let n = 0; n < 8; n++) d = Math.max(d, Math.abs(snapTarget[n] - snapCur[n]));
+    if (d < .75) break;
+    await sleep(16);
+  }
   snapCur = snapTarget.slice(); const T = applySnap();
   const svg = $("snap").querySelector("svg"), r = s.ring || { x: s.circle.x, y: s.circle.y, rx: s.circle.r * 1.3, ry: s.circle.r * 1.3 };
   const [w] = snapSize(), sw = Math.max(4, w / 110);
@@ -2219,14 +2475,13 @@ async function celebrate() {
 
 function capture(found) {
   stopLoop();
-  const vw = video.videoWidth, vh = video.videoHeight;
-  const out = document.createElement("canvas"); out.width = vw; out.height = vh;
-  const o = out.getContext("2d"); o.drawImage(video, 0, 0, vw, vh);
+  const out = document.createElement("canvas");
+  if (found && lastFound) { out.width = frameBuf.width; out.height = frameBuf.height; out.getContext("2d").drawImage(frameBuf, 0, 0); }
+  else grabFrame(out);
+  const o = out.getContext("2d");
   if (found && lastFound) {
-    const p = PROC_W / vw;
-    const Hv = mul3([1 / p, 0, 0, 0, 1 / p, 0, 0, 0, 1], lastFound.hm);  /* reference photo -> full camera image */
-    if (!drawOutline(o, Hv)) {
-      const r = lastFound.radius / p * 1.35;
+    if (!drawOutline(o, lastFound.hf)) {
+      const p = lastFound.ps, r = lastFound.radius / p * 1.35;
       o.strokeStyle = "#ee352e"; o.lineWidth = Math.max(6, r * .16);
       o.beginPath(); o.arc(lastFound.center.x / p, lastFound.center.y / p, r, 0, Math.PI * 2); o.stroke();
     }
@@ -2249,7 +2504,7 @@ function capture(found) {
     $("answer").inputMode = /^[0-9]+$/.test(HUNT.stops[state.i].char) ? "numeric" : "text";
   }
   recordShot();
-  if (accepted) state.found[state.i] = HUNT.stops[state.i].char;
+  if (accepted) { state.found[state.i] = HUNT.stops[state.i].char; (state.foundAt = state.foundAt || [])[state.i] = Date.now(); }
   save();
   const card = $("resCard"), later = [$("next"), document.querySelector("#resCard .links")];
   if (found) {
@@ -2320,7 +2575,7 @@ $("manual").addEventListener("submit", (e) => {
   if (got === s.char.toUpperCase()) {
     const ir = inp.getBoundingClientRect();
     inp.blur();
-    state.found[state.i] = s.char; save();
+    state.found[state.i] = s.char; (state.foundAt = state.foundAt || [])[state.i] = Date.now(); save();
     $("manual").classList.remove("on");
     $("badge").classList.add("found");
     $("badgeText").textContent = "Got it";
