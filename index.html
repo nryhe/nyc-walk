@@ -447,12 +447,15 @@
   .cardTabs { display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--fog); margin-bottom: 12px; }
   .cardTabs button { flex: 1; min-height: 40px; border: 0; border-radius: 999px; background: none; font-size: 14px; font-weight: 700; color: var(--muted); cursor: pointer; }
   .cardTabs button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 4px rgba(46,54,66,.15); }
-  #recapNote { font-size: 15px; line-height: 21px; color: var(--muted); text-align: center; margin: 4px 0 10px; }
+  #recapNote { font-size: 14px; line-height: 20px; color: var(--muted); text-align: center; margin: 10px 0 8px; }
+  #recapNote:empty { display: none; }
+  #surpriseNote { font-size: 16px; line-height: 22px; font-weight: 700; text-align: center; margin: 0 0 10px; }
+  #surpriseNote:empty { display: none; }
   .recapBar { height: 6px; border-radius: 3px; background: var(--fog); overflow: hidden; margin: 0 0 12px; }
   .recapBar span { display: block; height: 100%; width: 0; background: var(--ink); transition: width .2s; }
   #recapVid { position: static; inset: auto; height: auto; display: block; width: 100%; max-height: calc(92vh - 250px); max-height: calc(92dvh - 250px); object-fit: contain; border-radius: 12px; background: #000; }
   #reactNote { font-size: 16px; line-height: 22px; font-weight: 700; text-align: center; margin: 0 0 10px; }
-  #reactVid { position: static; inset: auto; height: auto; display: block; width: 100%; max-height: calc(92vh - 390px); max-height: calc(92dvh - 390px); object-fit: contain; border-radius: 12px; background: #000; transform: scaleX(-1); }
+  #reactVid { position: static; inset: auto; height: auto; display: block; width: 100%; max-height: calc(92vh - 390px); max-height: calc(92dvh - 390px); object-fit: contain; border-radius: 12px; background: #000; }
   #reactDel { min-height: 40px; margin-top: 8px; font-size: 14px; }
   #reactPhoto { display: block; width: 100%; max-height: calc(92vh - 390px); max-height: calc(92dvh - 390px); object-fit: contain; border-radius: 12px; background: #000; }
   .reactStrip { display: flex; gap: 6px; justify-content: center; margin-top: 8px; overflow-x: auto; }
@@ -475,7 +478,7 @@
   /* Share image */
   #cardDlg { border: 0; border-radius: 20px; padding: 16px; width: min(92vw, 420px); max-height: 92vh; color: var(--text); background: var(--surface); }
   #cardDlg::backdrop { background: rgba(31,37,46,.6); }
-  #cardImg { display: block; width: 100%; max-height: calc(92vh - 250px); max-height: calc(92dvh - 250px); object-fit: contain; border-radius: 12px; background: var(--ink); aspect-ratio: 9 / 16; }
+  #cardImg { display: block; width: 100%; max-height: calc(92vh - 270px); max-height: calc(92dvh - 270px); object-fit: contain; border-radius: 12px; background: var(--ink); aspect-ratio: 9 / 16; }
   #cardMsg { font-size: 15px; color: var(--muted); text-align: center; margin: 4px 0 10px; }
   #cardMsg:empty { display: none; }
   #cardDlg .stack { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
@@ -720,17 +723,21 @@
 </dialog>
 
 <dialog id="cardDlg" aria-label="Share your hunt">
-  <div class="cardTabs" id="cardTabs" role="group" aria-label="What to show" style="display:none">
+  <p id="surpriseNote"></p>
+  <p id="cardMsg" aria-live="polite"></p>
+  <img id="cardImg" alt="Your hunt: the route map, your reaction at each stop, and your times">
+  <p id="recapNote" aria-live="polite"></p>
+  <div class="recapBar" id="recapBar"><span></span></div>
+  <div class="stack">
+    <button class="btn" id="cardShare"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg><span>Share</span></button>
+    <button class="btn ghost" id="cardClose">Close</button>
+  </div>
+  <div hidden>
+    <div class="cardTabs" id="cardTabs" role="group" aria-label="What to show" style="display:none">
     <button id="tabImage" aria-pressed="true">Results</button><button id="tabRecap" aria-pressed="false">Recap</button><button id="tabReact" aria-pressed="false">Reactions</button>
   </div>
-  <p id="cardMsg" aria-live="polite"></p>
-  <img id="cardImg" alt="Your hunt: the route map, the time at each stop, and your total time and distance">
-  <div id="recapWrap" style="display:none">
-    <p id="recapNote">Making your recap video…</p>
-    <div class="recapBar" id="recapBar"><span></span></div>
-    <video id="recapVid" playsinline muted loop controls style="display:none"></video>
-  </div>
-  <div id="reactWrap" style="display:none">
+    <div id="recapWrap"><video id="recapVid" playsinline muted loop></video></div>
+    <div id="reactWrap" style="display:none">
     <p id="reactNote"></p>
     <video id="reactVid" playsinline muted loop controls></video>
     <img id="reactPhoto" alt="Kes's reaction photo" style="display:none">
@@ -740,6 +747,8 @@
   <div class="stack">
     <button class="btn" id="cardShare"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg><span>Share</span></button>
     <div class="btnRow"><button class="btn secondary" id="cardSave"><span>Save image</span></button><button class="btn ghost" id="cardClose">Close</button></div>
+  </div>
+    <button class="btn secondary" id="cardSave"><span>Save image</span></button>
   </div>
 </dialog>
 
@@ -1192,6 +1201,7 @@ function render(popIndex) {
     }
 
     /* Arrived at 767 Fifth: take the final photo */
+    if (state.atFinal) nearNow = true;
     if (nearNow) {
       sh.innerHTML = `
         <div class="body fin">
@@ -1265,7 +1275,7 @@ async function openPickup() {
 $("pickupDone").addEventListener("click", () => $("pickupDlg").close());
 
 /* ---------- The shareable end image ---------- */
-const BUILD = "Oct 8, build 27";
+const BUILD = "Oct 8, build 29";
 const PLACES = [
   { name: "Bryant Park", ll: [40.75337, -73.98123] },
   { name: "East 67th Street", ll: [40.76840, -73.97060] },
@@ -1483,8 +1493,7 @@ function snapReaction(stopIndex) {
       if (!w) return;
       const k = Math.min(1, 640 / Math.max(w, h)), c = document.createElement("canvas");
       c.width = Math.round(w * k); c.height = Math.round(h * k);
-      const g = c.getContext("2d"); g.translate(c.width, 0); g.scale(-1, 1);     /* mirrored, like a selfie */
-      g.drawImage(v, 0, 0, c.width, c.height);
+      c.getContext("2d").drawImage(v, 0, 0, c.width, c.height);
       const blob = await new Promise(r => c.toBlob(r, "image/jpeg", .85));
       if (blob) await mediaPut("snap" + stopIndex, blob);
     } catch (e) { /* no snap this time; the hunt carries on */ }
@@ -1521,7 +1530,7 @@ async function videoStill(blob, at) {
     await new Promise(res => { v.onseeked = res; setTimeout(res, 2500); });
     if (!v.videoWidth) return null;
     const c = document.createElement("canvas"); c.width = v.videoWidth; c.height = v.videoHeight;
-    const g = c.getContext("2d"); g.translate(c.width, 0); g.scale(-1, 1); g.drawImage(v, 0, 0);
+    c.getContext("2d").drawImage(v, 0, 0);
     return c;
   } catch (e) { return null; }
 }
@@ -1591,7 +1600,7 @@ function makeRecap(onProgress) {
       end: () => vid.pause(),
       draw: (t) => {
         g.fillStyle = "#000"; g.fillRect(0, 0, W, H);
-        g.save(); g.translate(W, 0); g.scale(-1, 1); coverDraw(g, vid, 0, 0, W, H); g.restore();
+        coverDraw(g, vid, 0, 0, W, H);
         g.fillStyle = "rgba(0,0,0,.65)"; roundRect(g, 32, 48, W - 64, 64, 10); g.fill();
         g.strokeStyle = "#3CFF7A"; g.lineWidth = 2; g.stroke();
         g.fillStyle = "#3CFF7A"; g.font = `700 26px ui-monospace, Menlo, monospace`; g.textAlign = "left";
@@ -1687,16 +1696,16 @@ function setShareReady() {
 async function startRecap() {
   if (!hasReactions()) return;
   const bar = $("recapBar").firstElementChild;
-  $("recapVid").style.display = "none"; $("recapBar").style.display = ""; $("recapNote").textContent = "Making your recap video…";
+  $("recapBar").style.display = ""; $("recapNote").textContent = "Getting your videos ready to share…";
   const p = makeRecap((f) => { bar.style.width = Math.round(f * 100) + "%"; });
   setShareReady();
   const blob = await p;
   if (blob) {
     $("recapVid").src = URL.createObjectURL(blob); $("recapVid").style.display = ""; $("recapBar").style.display = "none";
-    $("recapNote").textContent = "Your recap: the route, your reactions, and the hack.";
+    $("recapNote").textContent = "Ready to share: this image, a recap video, and your reaction video.";
     if (cardTab === "recap") { $("recapVid").play().catch(() => {}); $("cardSave").disabled = false; }
   } else {
-    $("recapBar").style.display = "none"; $("recapNote").textContent = "This phone couldn't make the video. You can still share the image and your reactions.";
+    $("recapBar").style.display = "none"; $("recapNote").textContent = reactBlob ? "Ready to share: this image and your reaction video." : "";
   }
   setShareReady();
 }
@@ -1709,9 +1718,10 @@ async function openShareCard() {
   if (reactBlob && !reactUrl) reactUrl = URL.createObjectURL(reactBlob);
   if (reactBlob) $("reactVid").src = reactUrl;
   buildStrip();
-  /* the first time, open on the surprise */
-  $("reactNote").textContent = reactSeen ? "Your reactions" : "Surprise! We caught your reactions along the way.";
-  setCardTab(hasReactions() && !reactSeen ? "react" : "image");
+  /* the first time, a line about the surprise in the image */
+  $("surpriseNote").textContent = hasReactions() && !reactSeen ? "Surprise! We caught your reactions along the way." : "";
+  setCardTab("image"); $("cardTabs").style.display = "none";
+  $("recapNote").textContent = ""; $("recapBar").style.display = "none";
   reactSeen = true;
   if (d.showModal) d.showModal();
   try {
@@ -1917,7 +1927,7 @@ $("navHere").addEventListener("click", () => {
   navStop();
   if (stopNav !== null && !state.finishedAt) { render(); return; }
   if (state.twistedAt) { state.doneAt = Date.now(); save(); }
-  else nearNow = true;
+  else { nearNow = true; state.atFinal = true; save(); }
   render();
 });
 async function navUpdate(first) {
@@ -2120,7 +2130,7 @@ function checkArrival(lat, lng, accuracy) {
   const d = metres([lat, lng], [dest().lat, dest().lng]);
   const near = d <= HUNT.arriveMetres + Math.min(accuracy || 0, 60) / 2;
   if (near && state.twistedAt) { navStop(); state.doneAt = Date.now(); save(); render(); return; }
-  if (near !== nearNow) { nearNow = near; if (near) navStop(); if (!document.querySelector(".screen.on")) render(); }
+  if (near && !nearNow) { nearNow = true; state.atFinal = true; save(); navStop(); if (!document.querySelector(".screen.on")) render(); }
 }
 
 function fitAll() {
